@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  category     String
+  description  String
+  durationMin  Int
+  bufferMin    Int           @default(15)
+  price        Int
+  isActive     Boolean       @default(true)
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  clientName  String
+  clientPhone String
+  clientNotes String?
+  techNotes   String?
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model WorkingHours {
+  id        Int     @id @default(autoincrement())
+  dayOfWeek Int     @unique // 0 = Domingo ... 6 = Sábado
+  startTime String
+  endTime   String
+  isOpen    Boolean @default(true)
+}
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  reason    String?
+}

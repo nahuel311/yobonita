@@ -311,7 +311,7 @@ export default function HomePage() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Camila López"
+                  placeholder="Ej: María Pérez"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   className="w-full bg-crema border border-oliva/40 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-oliva-dark"

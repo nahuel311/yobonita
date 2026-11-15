@@ -375,7 +375,7 @@ export default function HomePage() {
                     Seleccioná una fecha
                   </label>
                   <span className="text-[11px] text-musgo/60">
-                    Lun a Vie • 08:00 a 19:30 hs
+                    Lun a Vie • 08:00 a 19:30 (Almuerzo 13:30 a 15:00)
                   </span>
                 </div>
                 <div className="relative">
@@ -400,9 +400,14 @@ export default function HomePage() {
                     </div>
                   ) : (
                     <>
-                      <label className="block text-xs font-medium text-musgo/80 mb-2">
-                        Horarios libres para {selectedService.name}
-                      </label>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <label className="block text-xs font-medium text-musgo/80">
+                          Horarios disponibles (24 hs)
+                        </label>
+                        <span className="text-[11px] text-musgo/50">
+                          {slots.length} turnos libres
+                        </span>
+                      </div>
                       {loadingSlots ? (
                         <p className="text-xs text-musgo/60">Buscando turnos...</p>
                       ) : slots.length === 0 ? (
@@ -410,19 +415,19 @@ export default function HomePage() {
                           No hay horarios disponibles para esta fecha. Probá otro día o escribinos por WhatsApp.
                         </p>
                       ) : (
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                           {slots.map((slot) => (
                             <button
                               key={slot}
                               type="button"
                               onClick={() => setSelectedTime(slot)}
-                              className={`py-2 px-3 rounded-xl text-sm font-medium border transition ${
+                              className={`py-2 px-1 rounded-xl text-xs font-semibold border transition text-center tracking-tight ${
                                 selectedTime === slot
-                                  ? "bg-oliva-dark text-white border-oliva-dark"
+                                  ? "bg-oliva-dark text-white border-oliva-dark shadow-sm"
                                   : "bg-crema text-musgo border-oliva/30 hover:border-oliva-dark"
                               }`}
                             >
-                              {slot} hs
+                              {slot}
                             </button>
                           ))}
                         </div>

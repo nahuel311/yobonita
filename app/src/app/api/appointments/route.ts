@@ -56,6 +56,22 @@ export async function POST(req: Request) {
     );
   }
 
+  // Validar franja fija de almuerzo (13:30 a 15:00 hs) en días hábiles
+  const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5;
+  if (isBusinessDay) {
+    const [h, m] = time.split(":").map(Number);
+    const startMin = h * 60 + m;
+    const endMin = startMin + service.durationMin + bufferMin;
+    const lunchStartMin = 13 * 60 + 30; // 13:30
+    const lunchEndMin = 15 * 60;        // 15:00
+    if (startMin < lunchEndMin && endMin > lunchStartMin) {
+      return NextResponse.json(
+        { error: "El horario seleccionado coincide con el almuerzo del estudio (13:30 a 15:00 hs)." },
+        { status: 400 }
+      );
+    }
+  }
+
   // Verificar que nadie haya reservado ese bloque segundos antes
   const conflict = await prisma.appointment.findFirst({
     where: {

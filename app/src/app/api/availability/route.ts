@@ -61,10 +61,20 @@ export async function GET(req: Request) {
   const minBookingTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // Mínimo 2hs de anticipación
   const slots: string[] = [];
 
+  // Franja fija de almuerzo configurada por default para días hábiles (13:30 a 15:00)
+  const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5;
+  const LUNCH_START_MIN = 13 * 60 + 30; // 13:30
+  const LUNCH_END_MIN = 15 * 60;        // 15:00
+
   for (let m = openMinutes; m + service.durationMin <= closeMinutes; m += 30) {
     const hh = String(Math.floor(m / 60)).padStart(2, "0");
     const mm = String(m % 60).padStart(2, "0");
     const timeLabel = `${hh}:${mm}`;
+
+    // Bloqueo si el tratamiento o su buffer se superponen con la franja de almuerzo
+    if (isBusinessDay && m < LUNCH_END_MIN && (m + totalBlockMin) > LUNCH_START_MIN) {
+      continue;
+    }
 
     const candidateStart = new Date(`${dateStr}T${timeLabel}:00-03:00`);
     const candidateEnd = new Date(candidateStart.getTime() + totalBlockMin * 60000);

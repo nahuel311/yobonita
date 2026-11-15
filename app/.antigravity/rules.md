@@ -10,6 +10,7 @@
   2. **Buffer Time (Tiempo de preparación):** Cada servicio tiene un `durationMin` (atención) + `bufferMin` (15 a 20 min de limpieza, esterilización y ventilación). El motor de disponibilidad bloquea `durationMin + bufferMin` para evitar superposiciones.
   3. **Flujo de Seña y WhatsApp sin API paga:** La reserva web crea un turno en estado `PENDING` y redirige a WhatsApp (`https://wa.me/...`) con un mensaje prearmado para enviar el comprobante de la seña (30%). Todas las notificaciones operativas usan deep links de WhatsApp.
   4. **Zona Horaria:** Toda la lógica de fechas y disponibilidad opera estrictamente en hora de Argentina (`America/Argentina/Buenos_Aires` / `-03:00`) con un mínimo de 2 horas de anticipación para turnos en el mismo día[cite: 3].
+  5. **Horarios de Atención y Almuerzo:** Atención de Lunes a Viernes de 08:00 a 19:30 hs. Franja fija de almuerzo por default de 13:30 a 15:00 hs (bloqueada para reservas). Sábados y domingos cerrados por default.
 
 ## 2. Identidad Visual y Diseño UI ("Naturaleza Minimalista")
 - **Enfoque:** 100% *mobile-first* (tráfico principal proveniente de la bio de Instagram)[cite: 3].

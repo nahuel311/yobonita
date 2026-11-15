@@ -77,12 +77,13 @@ export default function AdminPage() {
     return `${year}-${month}-${day}`;
   };
 
-  const formatTimeOnly = (iso: string) => {
-    const d = new Date(iso);
+  const formatTimeOnly = (iso: string | Date) => {
+    const d = typeof iso === "string" ? new Date(iso) : iso;
     return d.toLocaleTimeString("es-AR", {
       timeZone: "America/Argentina/Buenos_Aires",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   };
 
@@ -269,8 +270,8 @@ export default function AdminPage() {
     });
   };
 
-  const formatDateTime = (iso: string) => {
-    const d = new Date(iso);
+  const formatDateTime = (iso: string | Date) => {
+    const d = typeof iso === "string" ? new Date(iso) : iso;
     return d.toLocaleString("es-AR", {
       timeZone: "America/Argentina/Buenos_Aires",
       weekday: "short",
@@ -278,6 +279,7 @@ export default function AdminPage() {
       month: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   };
 
@@ -612,7 +614,7 @@ export default function AdminPage() {
                             </span>
                           ) : isRegularOpen ? (
                             <span className="inline-block text-[10px] font-medium text-oliva-dark bg-oliva/20 px-2 py-0.5 rounded-full">
-                              ✓ Atiende ({regularHours?.startTime || "08:00"})
+                              ✓ {regularHours?.startTime || "08:00"} - {regularHours?.endTime || "19:30"}
                             </span>
                           ) : (
                             <span className="inline-block text-[10px] font-medium text-musgo/50 bg-gray-100 px-2 py-0.5 rounded-full">
@@ -633,6 +635,18 @@ export default function AdminPage() {
                           </div>
                         ) : (
                           <>
+                            {/* Franja fija de almuerzo por default en días hábiles */}
+                            {dayNum >= 1 && dayNum <= 5 && isRegularOpen && (
+                              <div className="bg-amber-50/80 border border-amber-200/70 rounded-lg px-2 py-1 text-[10px] text-amber-900 flex items-center justify-between">
+                                <span className="font-semibold flex items-center gap-1">
+                                  🥪 13:30 - 15:00
+                                </span>
+                                <span className="text-[9px] text-amber-700 bg-amber-100/90 px-1.5 py-0.2 rounded font-medium">
+                                  Almuerzo
+                                </span>
+                              </div>
+                            )}
+
                             {partialBlocks.map((blk) => (
                               <div
                                 key={blk.id}
@@ -804,21 +818,26 @@ export default function AdminPage() {
                     </div>
 
                     {wh.isOpen && (
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-musgo/70">Desde:</span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-musgo/70">Horario (24 hs):</span>
                         <input
                           type="time"
                           value={wh.startTime || "08:00"}
                           onChange={(e) => updateDayProperty("startTime", e.target.value)}
-                          className="bg-white border border-oliva/40 rounded-xl px-2.5 py-1.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark"
+                          className="bg-white border border-oliva/40 rounded-xl px-2.5 py-1.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark font-medium"
                         />
-                        <span className="text-musgo/70">Hasta:</span>
+                        <span className="text-musgo/70">a</span>
                         <input
                           type="time"
                           value={wh.endTime || "19:30"}
                           onChange={(e) => updateDayProperty("endTime", e.target.value)}
-                          className="bg-white border border-oliva/40 rounded-xl px-2.5 py-1.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark"
+                          className="bg-white border border-oliva/40 rounded-xl px-2.5 py-1.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark font-medium"
                         />
+                        {dayOfWeekNum >= 1 && dayOfWeekNum <= 5 && (
+                          <span className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-lg font-medium ml-1">
+                            🥪 Almuerzo: 13:30 - 15:00
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

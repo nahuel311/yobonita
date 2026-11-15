@@ -26,7 +26,7 @@ services:
     environment:
       - SERVER_URL=http://localhost:8080
       - AUTHENTICATION_TYPE=apikey
-      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+      - AUTHENTICATION_API_KEY=dfcd3851871ae93f8413308b4bdca2a7afc0f2a2f190c211
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
       - DEL_INSTANCE=false
       - CONFIG_SESSION_PHONE_CLIENT=YoBonita

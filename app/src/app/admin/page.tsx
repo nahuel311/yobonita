@@ -244,6 +244,20 @@ export default function AdminPage() {
                         >
                           Marcar Realizado
                         </button>
+
+                        <button
+                          onClick={async () => {
+                            const res = await fetch(`/api/appointments/${app.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ action: "SEND_REMINDER" }),
+                            });
+                            if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
+                          }}
+                          className="bg-oliva text-musgo text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" /> Recordatorio
+                        </button>
                       </>
                     )}
                     {app.status !== "CANCELLED" && app.status !== "COMPLETED" && (

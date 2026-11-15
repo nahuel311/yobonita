@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Sparkles,
   MapPin,
@@ -34,17 +34,75 @@ export default function HomePage() {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientNotes, setClientNotes] = useState("");
+  const [hasAllergies, setHasAllergies] = useState(false);
+  const [hasContactLenses, setHasContactLenses] = useState(false);
+  const [lastTreatment, setLastTreatment] = useState("");
+  const [rememberData, setRememberData] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [bookedData, setBookedData] = useState<any>(null);
 
-  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5491100000000";
+  const dateSectionRef = useRef<HTMLElement | null>(null);
+  const formSectionRef = useRef<HTMLFormElement | null>(null);
+
+  const [waNumber, setWaNumber] = useState(
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5491100000000"
+  );
 
   useEffect(() => {
     fetch("/api/services")
       .then((r) => r.json())
       .then((data) => setServices(data));
+
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.whatsappNumber) setWaNumber(data.whatsappNumber);
+      })
+      .catch(() => {});
+
+    // Cargar datos recordados de la clienta si existen
+    try {
+      const saved = localStorage.getItem("yobonita_client_info");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.name) setClientName(parsed.name);
+        if (parsed.phone) setClientPhone(parsed.phone);
+        if (typeof parsed.hasAllergies === "boolean") setHasAllergies(parsed.hasAllergies);
+        if (typeof parsed.hasContactLenses === "boolean") setHasContactLenses(parsed.hasContactLenses);
+        setRememberData(true);
+      }
+    } catch {
+      // Ignorar restricciones de almacenamiento local
+    }
   }, []);
+
+  // Autoscroll a la sección de fecha al seleccionar turno/tratamiento
+  useEffect(() => {
+    if (selectedService && dateSectionRef.current) {
+      const timer = setTimeout(() => {
+        dateSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedService]);
+
+  // Autoscroll a la sección del formulario al seleccionar horario
+  useEffect(() => {
+    if (selectedTime && formSectionRef.current) {
+      const timer = setTimeout(() => {
+        formSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTime]);
 
   useEffect(() => {
     if (!selectedService || !selectedDate) return;
@@ -58,11 +116,51 @@ export default function HomePage() {
       });
   }, [selectedService, selectedDate]);
 
+  const handleRememberToggle = (checked: boolean) => {
+    setRememberData(checked);
+    if (!checked) {
+      try {
+        localStorage.removeItem("yobonita_client_info");
+      } catch {}
+    } else {
+      try {
+        localStorage.setItem(
+          "yobonita_client_info",
+          JSON.stringify({
+            name: clientName,
+            phone: clientPhone,
+            hasAllergies,
+            hasContactLenses,
+          })
+        );
+      } catch {}
+    }
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime) return;
     setSubmitting(true);
     setErrorMsg("");
+
+    // Guardar o eliminar datos recordados según preferencia
+    if (rememberData) {
+      try {
+        localStorage.setItem(
+          "yobonita_client_info",
+          JSON.stringify({
+            name: clientName,
+            phone: clientPhone,
+            hasAllergies,
+            hasContactLenses,
+          })
+        );
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem("yobonita_client_info");
+      } catch {}
+    }
 
     const res = await fetch("/api/appointments", {
       method: "POST",
@@ -74,6 +172,9 @@ export default function HomePage() {
         clientName,
         clientPhone,
         clientNotes,
+        hasAllergies,
+        hasContactLenses,
+        lastTreatment,
       }),
     });
 
@@ -111,7 +212,7 @@ export default function HomePage() {
       <header className="text-center mb-8">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-lino text-musgo text-xs tracking-wide mb-3">
           <MapPin className="w-3.5 h-3.5 text-oliva-dark" />
-          <span>Home Studio Privado • Recoleta, CABA</span>
+          <span>Home Studio • Recoleta, CABA</span>
         </div>
         <h1 className="font-serif text-5xl font-semibold tracking-tight text-musgo">
           Yo Bonita
@@ -175,6 +276,14 @@ export default function HomePage() {
             onClick={() => {
               setBookedData(null);
               setSelectedTime("");
+              if (!rememberData) {
+                setClientName("");
+                setClientPhone("");
+                setHasAllergies(false);
+                setHasContactLenses(false);
+              }
+              setLastTreatment("");
+              setClientNotes("");
             }}
             className="text-xs text-musgo/60 underline"
           >
@@ -240,7 +349,10 @@ export default function HomePage() {
 
           {/* Paso 2: Día y Horario */}
           {selectedService && (
-            <section className="bg-white/80 border border-lino rounded-3xl p-5 space-y-4">
+            <section
+              ref={dateSectionRef}
+              className="bg-white/80 border border-lino rounded-3xl p-5 space-y-4 scroll-mt-6"
+            >
               <h2 className="font-serif text-2xl font-semibold text-musgo">
                 2. Día y horario disponible
               </h2>
@@ -297,8 +409,9 @@ export default function HomePage() {
           {/* Paso 3: Datos de la Clienta */}
           {selectedService && selectedDate && selectedTime && (
             <form
+              ref={formSectionRef}
               onSubmit={handleBooking}
-              className="bg-white/85 border border-oliva/40 rounded-3xl p-5 space-y-4"
+              className="bg-white/85 border border-oliva/40 rounded-3xl p-5 space-y-4 scroll-mt-6"
             >
               <h2 className="font-serif text-2xl font-semibold text-musgo">
                 3. Tus datos
@@ -332,18 +445,79 @@ export default function HomePage() {
                 />
               </div>
 
+              {/* Checkboxes de salud / condiciones */}
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-medium text-musgo/80">
+                  Condiciones previas (opcional)
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-crema/60 border border-oliva/30 cursor-pointer hover:border-oliva transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={hasAllergies}
+                      onChange={(e) => setHasAllergies(e.target.checked)}
+                      className="w-4 h-4 rounded text-oliva-dark accent-oliva-dark focus:ring-oliva"
+                    />
+                    <span className="text-sm text-musgo">
+                      Alergias o sensibilidad en ojos / piel
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-crema/60 border border-oliva/30 cursor-pointer hover:border-oliva transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={hasContactLenses}
+                      onChange={(e) => setHasContactLenses(e.target.checked)}
+                      className="w-4 h-4 rounded text-oliva-dark accent-oliva-dark focus:ring-oliva"
+                    />
+                    <span className="text-sm text-musgo">
+                      Uso de lentes de contacto
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-musgo/80 mb-1">
-                  ¿Alergias, lentes de contacto o tratamientos recientes? (opcional)
+                  ¿Cuándo fue tu último tratamiento de pestañas o cejas? (opcional)
+                </label>
+                <select
+                  value={lastTreatment}
+                  onChange={(e) => setLastTreatment(e.target.value)}
+                  className="w-full bg-crema border border-oliva/40 rounded-xl px-3.5 py-2.5 text-sm text-musgo focus:outline-none focus:border-oliva-dark"
+                >
+                  <option value="">Seleccioná una opción...</option>
+                  <option value="Primera vez (nunca me hice)">Es mi primera vez / Nunca me hice</option>
+                  <option value="Hace menos de 1 mes">Hace menos de 1 mes</option>
+                  <option value="Hace 1 a 2 meses">Hace 1 a 2 meses</option>
+                  <option value="Hace más de 2 meses">Hace más de 2 meses</option>
+                  <option value="Otro">Otro (especificar en comentarios)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-musgo/80 mb-1">
+                  Otros comentarios u observaciones (opcional)
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="Contanos si tenés alguna sensibilidad..."
+                  placeholder="¿Algún detalle o consulta adicional que quieras dejarnos?..."
                   value={clientNotes}
                   onChange={(e) => setClientNotes(e.target.value)}
                   className="w-full bg-crema border border-oliva/40 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-oliva-dark"
                 />
               </div>
+
+              {/* Checkbox Recordar datos */}
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs text-musgo/80 select-none pt-0.5">
+                <input
+                  type="checkbox"
+                  checked={rememberData}
+                  onChange={(e) => handleRememberToggle(e.target.checked)}
+                  className="w-4 h-4 rounded text-oliva-dark accent-oliva-dark focus:ring-oliva"
+                />
+                <span>Recordar mis datos en este dispositivo</span>
+              </label>
 
               {errorMsg && (
                 <p className="text-xs text-red-700 bg-red-50 p-2.5 rounded-xl">

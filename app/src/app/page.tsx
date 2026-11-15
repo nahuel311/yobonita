@@ -104,8 +104,20 @@ export default function HomePage() {
     }
   }, [selectedTime]);
 
+  const isWeekend = (dateStr: string) => {
+    if (!dateStr) return false;
+    const d = new Date(`${dateStr}T00:00:00-03:00`);
+    const day = d.getUTCDay();
+    return day === 0 || day === 6;
+  };
+
   useEffect(() => {
     if (!selectedService || !selectedDate) return;
+    if (isWeekend(selectedDate)) {
+      setSlots([]);
+      setSelectedTime("");
+      return;
+    }
     setLoadingSlots(true);
     setSelectedTime("");
     fetch(`/api/availability?date=${selectedDate}&serviceId=${selectedService.id}`)
@@ -358,9 +370,14 @@ export default function HomePage() {
               </h2>
 
               <div>
-                <label className="block text-xs font-medium text-musgo/80 mb-1.5">
-                  Seleccioná una fecha
-                </label>
+                <div className="flex justify-between items-baseline mb-1.5">
+                  <label className="block text-xs font-medium text-musgo/80">
+                    Seleccioná una fecha
+                  </label>
+                  <span className="text-[11px] text-musgo/60">
+                    Lun a Vie • 08:00 a 19:30 hs
+                  </span>
+                </div>
                 <div className="relative">
                   <input
                     type="date"
@@ -374,32 +391,43 @@ export default function HomePage() {
 
               {selectedDate && (
                 <div>
-                  <label className="block text-xs font-medium text-musgo/80 mb-2">
-                    Horarios libres para {selectedService.name}
-                  </label>
-                  {loadingSlots ? (
-                    <p className="text-xs text-musgo/60">Buscando turnos...</p>
-                  ) : slots.length === 0 ? (
-                    <p className="text-xs bg-lino/60 p-3 rounded-xl text-musgo/80">
-                      No hay horarios disponibles para esta fecha. Probá otro día o escribinos por WhatsApp.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {slots.map((slot) => (
-                        <button
-                          key={slot}
-                          type="button"
-                          onClick={() => setSelectedTime(slot)}
-                          className={`py-2 px-3 rounded-xl text-sm font-medium border transition ${
-                            selectedTime === slot
-                              ? "bg-oliva-dark text-white border-oliva-dark"
-                              : "bg-crema text-musgo border-oliva/30 hover:border-oliva-dark"
-                          }`}
-                        >
-                          {slot} hs
-                        </button>
-                      ))}
+                  {isWeekend(selectedDate) ? (
+                    <div className="p-3.5 rounded-2xl bg-lino/60 border border-oliva/30 text-xs text-musgo space-y-1">
+                      <p className="font-medium text-musgo">Estudio cerrado los fines de semana</p>
+                      <p className="text-musgo/75 leading-relaxed">
+                        Atendemos de lunes a viernes a partir de las 08:00 hs. Por favor elegí un día hábil en el calendario.
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      <label className="block text-xs font-medium text-musgo/80 mb-2">
+                        Horarios libres para {selectedService.name}
+                      </label>
+                      {loadingSlots ? (
+                        <p className="text-xs text-musgo/60">Buscando turnos...</p>
+                      ) : slots.length === 0 ? (
+                        <p className="text-xs bg-lino/60 p-3 rounded-xl text-musgo/80">
+                          No hay horarios disponibles para esta fecha. Probá otro día o escribinos por WhatsApp.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2">
+                          {slots.map((slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => setSelectedTime(slot)}
+                              className={`py-2 px-3 rounded-xl text-sm font-medium border transition ${
+                                selectedTime === slot
+                                  ? "bg-oliva-dark text-white border-oliva-dark"
+                                  : "bg-crema text-musgo border-oliva/30 hover:border-oliva-dark"
+                              }`}
+                            >
+                              {slot} hs
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

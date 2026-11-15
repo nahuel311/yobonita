@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   });
 
   if (!workingHours || !workingHours.isOpen) {
-    return NextResponse.json({ slots: [] });
+    return NextResponse.json({ slots: [], isClosed: true });
   }
 
   const [openH, openM] = workingHours.startTime.split(":").map(Number);
@@ -37,7 +37,8 @@ export async function GET(req: Request) {
 
   const openMinutes = openH * 60 + openM;
   const closeMinutes = closeH * 60 + closeM;
-  const totalBlockMin = service.durationMin + service.bufferMin;
+  const bufferMin = service.bufferMin ?? 15;
+  const totalBlockMin = service.durationMin + bufferMin;
 
   // Buscar turnos activos y bloqueos de ese día
   const [appointments, blockedSlots] = await Promise.all([
@@ -46,6 +47,7 @@ export async function GET(req: Request) {
         status: { in: ["PENDING", "CONFIRMED"] },
         startTime: { gte: dayStart, lte: dayEnd },
       },
+      include: { service: true },
     }),
     prisma.blockedSlot.findMany({
       where: {
@@ -69,9 +71,14 @@ export async function GET(req: Request) {
 
     if (candidateStart < minBookingTime) continue;
 
-    const overlapsApp = appointments.some(
-      (app) => candidateStart < app.endTime && candidateEnd > app.startTime
-    );
+    const overlapsApp = appointments.some((app) => {
+      // Bloque ocupado: duración del tratamiento + 15 min de margen para acondicionar el lugar
+      const appBuffer = app.service?.bufferMin ?? 15;
+      const effectiveAppEnd = app.service
+        ? new Date(app.startTime.getTime() + (app.service.durationMin + appBuffer) * 60000)
+        : app.endTime;
+      return candidateStart < effectiveAppEnd && candidateEnd > app.startTime;
+    });
     const overlapsBlock = blockedSlots.some(
       (blk) => candidateStart < blk.endTime && candidateEnd > blk.startTime
     );

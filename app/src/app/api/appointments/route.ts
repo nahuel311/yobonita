@@ -39,10 +39,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Servicio inválido" }, { status: 404 });
   }
 
+  const bufferMin = service.bufferMin ?? 15;
   const startTime = new Date(`${date}T${time}:00-03:00`);
   const endTime = new Date(
-    startTime.getTime() + (service.durationMin + service.bufferMin) * 60000
+    startTime.getTime() + (service.durationMin + bufferMin) * 60000
   );
+
+  const dayOfWeek = startTime.getUTCDay();
+  const workingHours = await prisma.workingHours.findUnique({
+    where: { dayOfWeek },
+  });
+  if (!workingHours || !workingHours.isOpen) {
+    return NextResponse.json(
+      { error: "El estudio permanece cerrado en la fecha seleccionada. Por favor elegí otro día." },
+      { status: 400 }
+    );
+  }
 
   // Verificar que nadie haya reservado ese bloque segundos antes
   const conflict = await prisma.appointment.findFirst({

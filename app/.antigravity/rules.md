@@ -76,14 +76,17 @@
                 ├── services/[id]/route.ts    # PATCH (actualizar precio, duración o estado)[cite: 3]
                 ├── availability/route.ts     # GET (calcula slots libres según fecha y servicio)[cite: 3]
                 ├── appointments/route.ts     # GET (lista admin) / POST (nueva reserva web)[cite: 3]
-                └── appointments/[id]/route.ts # PATCH (cambiar estado o guardar techNotes)[cite: 3]
+                ├── appointments/[id]/route.ts # PATCH (cambiar estado o guardar techNotes)[cite: 3]
+                ├── working-hours/route.ts    # GET (horarios semanales) / PUT (actualizar días/horas)
+                ├── blocked-slots/route.ts    # GET (listar bloqueos) / POST (crear bloqueo puntual/día)
+                └── blocked-slots/[id]/route.ts # DELETE (eliminar bloqueo)
 
 5. Modelo de Datos (prisma/schema.prisma)
 Service: id, name, category ("Pestañas" | "Cejas" | "Combos"), description, durationMin, bufferMin (default 15), price (Int en ARS), isActive[cite: 3].
 
 Appointment: id, clientName, clientPhone (normalizado a 549...), clientNotes (alergias/observaciones clienta), techNotes (ficha técnica interna: molde, tiempos, pigmento), startTime, endTime (startTime + durationMin + bufferMin), status (PENDING | CONFIRMED | COMPLETED | CANCELLED), serviceId[cite: 3].
 
-WorkingHours: dayOfWeek (0 Dom a 6 Sáb), startTime ("10:00"), endTime ("19:30"), isOpen[cite: 3].
+WorkingHours: dayOfWeek (0 Dom a 6 Sáb), startTime ("08:00"), endTime ("19:30"), isOpen (Lun a Vie abierto, Sáb y Dom cerrado).
 
 BlockedSlot: id, startTime, endTime, reason[cite: 3].
 

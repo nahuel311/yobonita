@@ -340,39 +340,12 @@ export default function AdminPage() {
           <button
             onClick={() => setTab("agenda")}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              tab === "agenda" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" /> Agenda ({activeAppointments.length})
-          </button>
-          <button
-            onClick={() => setTab("horarios")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              tab === "horarios" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" /> Días y Horarios
-          </button>
-          <button
-            onClick={() => setTab("servicios")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              tab === "servicios" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" /> Servicios y Precios
-          </button>
-        </div>
-      </header>
-
-      {tab === "agenda" ? (
-        <div className="space-y-4">
-          {appointments.length === 0 ? (
-            <p className="text-sm text-musgo/70 text-center py-8">
-              Todavía no hay turnos registrados.
-            </p>
-          ) : (
-            appointments.map((app) => (
-              <div
+              tab === "agenda" ? <DayAgendaView (
+                appointments={appointments}
+                blockedSlots={blockedSlots} // Si ya los cargás en loadData(), sino podés omitirlo
+                onUpdateAppointment={updateAppointment}
+                onSendReminder={async (id) => {
+                  const res = await fetch(`/api/appointments/${id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: "SEND_REMINDER" }),

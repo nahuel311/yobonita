@@ -328,7 +328,7 @@ export default function AdminPage() {
   const activeAppointments = appointments.filter((a) => a.status !== "CANCELLED");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-lino pb-4">
         <div>
           <h1 className="font-serif text-3xl font-semibold text-musgo">
@@ -339,24 +339,8 @@ export default function AdminPage() {
         <div className="flex flex-wrap gap-2 bg-lino/60 p-1 rounded-xl">
           <button
             onClick={() => setTab("agenda")}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              tab === "agenda" ? <DayAgendaView (
-                appointments={appointments}
-                blockedSlots={blockedSlots} // Si ya los cargás en loadData(), sino podés omitirlo
-                onUpdateAppointment={updateAppointment}
-                onSendReminder={async (id) => {
-                  const res = await fetch(`/api/appointments/${id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: "SEND_REMINDER" }),
-                  });
-                  if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
-                }}
-              />
-              ) : (
-                  /* ... resto de pestañas existentes (Servicios / Horarios) ... */
-                  )
-            }`}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${tab === "agenda" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
+              }`}
           >
             <Calendar className="w-3.5 h-3.5" /> Agenda ({activeAppointments.length})
           </button>
@@ -380,132 +364,19 @@ export default function AdminPage() {
       </header>
 
       {tab === "agenda" ? (
-        <div className="space-y-4">
-          {appointments.length === 0 ? (
-            <p className="text-sm text-musgo/70 text-center py-8">
-              Todavía no hay turnos registrados.
-            </p>
-          ) : (
-            appointments.map((app) => (
-              <div
-                key={app.id}
-                className="bg-white border border-lino rounded-2xl p-4 space-y-3 shadow-sm"
-              >
-                <div className="flex flex-wrap justify-between items-start gap-2">
-                  <div>
-                    <span
-                      className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase mb-1 ${
-                        app.status === "CONFIRMED"
-                          ? "bg-oliva/30 text-oliva-dark"
-                          : app.status === "PENDING"
-                          ? "bg-amber-100 text-amber-800"
-                          : app.status === "COMPLETED"
-                          ? "bg-musgo text-white"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {app.status === "PENDING"
-                        ? "Esperando Seña"
-                        : app.status === "CONFIRMED"
-                        ? "Confirmado"
-                        : app.status === "COMPLETED"
-                        ? "Realizado"
-                        : "Cancelado"}
-                    </span>
-                    <h3 className="font-semibold text-musgo">
-                      {app.clientName} — {app.service.name}
-                    </h3>
-                    <p className="text-xs text-musgo/80 font-medium">
-                      📅 {formatDateTime(app.startTime)} hs
-                    </p>
-                  </div>
-
-                  {/* Acciones de Estado */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {app.status === "PENDING" && (
-                      <button
-                        onClick={() => updateAppointment(app.id, { status: "CONFIRMED" })}
-                        className="bg-oliva-dark text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
-                      >
-                        <Check className="w-3.5 h-3.5" /> Confirmar Seña
-                      </button>
-                    )}
-                    {app.status === "CONFIRMED" && (
-                      <>
-                        <a
-                          href={getWhatsAppConfirmLink(app)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" /> Enviar Dirección
-                        </a>
-                        <button
-                          onClick={() => updateAppointment(app.id, { status: "COMPLETED" })}
-                          className="bg-musgo text-white text-xs px-3 py-1.5 rounded-lg"
-                        >
-                          Marcar Realizado
-                        </button>
-
-                        <button
-                          onClick={async () => {
-                            const res = await fetch(`/api/appointments/${app.id}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ action: "SEND_REMINDER" }),
-                            });
-                            if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
-                          }}
-                          className="bg-oliva text-musgo text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" /> Recordatorio
-                        </button>
-                      </>
-                    )}
-                    {app.status !== "CANCELLED" && app.status !== "COMPLETED" && (
-                      <button
-                        onClick={() => updateAppointment(app.id, { status: "CANCELLED" })}
-                        className="border border-red-200 text-red-700 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1"
-                      >
-                        <X className="w-3.5 h-3.5" /> Cancelar
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {app.clientNotes && (
-                  <p className="text-xs bg-lino/60 p-2.5 rounded-xl text-musgo">
-                    <strong>Nota de la clienta:</strong> {app.clientNotes}
-                  </p>
-                )}
-
-                {/* Ficha Técnica Privada */}
-                <div className="pt-2 border-t border-lino/70 flex gap-2">
-                  <div className="flex-1 flex items-center gap-1.5 bg-crema rounded-xl px-3 py-1.5">
-                    <FileText className="w-3.5 h-3.5 text-oliva-dark shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Ficha técnica: molde bigudí, tiempos, pigmento..."
-                      value={techNotesMap[app.id] ?? ""}
-                      onChange={(e) =>
-                        setTechNotesMap({ ...techNotesMap, [app.id]: e.target.value })
-                      }
-                      className="w-full bg-transparent text-xs focus:outline-none"
-                    />
-                  </div>
-                  <button
-                    onClick={() =>
-                      updateAppointment(app.id, { techNotes: techNotesMap[app.id] })
-                    }
-                    className="bg-lino hover:bg-oliva text-musgo text-xs px-3 py-1.5 rounded-xl flex items-center gap-1"
-                  >
-                    <Save className="w-3.5 h-3.5" /> Guardar
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <DayAgendaView
+          appointments={appointments}
+          blockedSlots={blockedSlots}
+          onUpdateAppointment={updateAppointment}
+          onSendReminder={async (id) => {
+            const res = await fetch(`/api/appointments/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "SEND_REMINDER" }),
+            });
+            if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
+          }}
+        />
       ) : tab === "horarios" ? (
         <div className="space-y-8">
           {/* Vista Semanal Interactiva */}

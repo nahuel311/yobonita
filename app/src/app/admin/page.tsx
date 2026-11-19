@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DayAgendaView from "@/components/admin/DayAgendaView";
 import {
   Lock,
   Check,
@@ -327,7 +328,7 @@ export default function AdminPage() {
   const activeAppointments = appointments.filter((a) => a.status !== "CANCELLED");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-lino pb-4">
         <div>
           <h1 className="font-serif text-3xl font-semibold text-musgo">
@@ -339,7 +340,23 @@ export default function AdminPage() {
           <button
             onClick={() => setTab("agenda")}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              tab === "agenda" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
+              { tab === "agenda" ? (
+                <DayAgendaView
+                  appointments={appointments}
+                  blockedSlots={blockedSlots} // Si ya los cargás en loadData(), sino podés omitirlo
+                  onUpdateAppointment={updateAppointment}
+                  onSendReminder={async (id) => {
+                    const res = await fetch(`/api/appointments/${id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "SEND_REMINDER" }),
+                    });
+                    if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
+                  }}
+                />
+              ) : (
+  /* ... resto de pestañas existentes (Servicios / Horarios) ... */
+)}
             }`}
           >
             <Calendar className="w-3.5 h-3.5" /> Agenda ({activeAppointments.length})

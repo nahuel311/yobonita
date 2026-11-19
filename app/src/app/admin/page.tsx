@@ -340,23 +340,22 @@ export default function AdminPage() {
           <button
             onClick={() => setTab("agenda")}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-              { tab === "agenda" ? (
-                <DayAgendaView
-                  appointments={appointments}
-                  blockedSlots={blockedSlots} // Si ya los cargás en loadData(), sino podés omitirlo
-                  onUpdateAppointment={updateAppointment}
-                  onSendReminder={async (id) => {
-                    const res = await fetch(`/api/appointments/${id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "SEND_REMINDER" }),
-                    });
-                    if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
-                  }}
-                />
+              tab === "agenda" ? <DayAgendaView (
+                appointments={appointments}
+                blockedSlots={blockedSlots} // Si ya los cargás en loadData(), sino podés omitirlo
+                onUpdateAppointment={updateAppointment}
+                onSendReminder={async (id) => {
+                  const res = await fetch(`/api/appointments/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "SEND_REMINDER" }),
+                  });
+                  if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
+                }}
+              />
               ) : (
-  /* ... resto de pestañas existentes (Servicios / Horarios) ... */
-)}
+                  /* ... resto de pestañas existentes (Servicios / Horarios) ... */
+                  )
             }`}
           >
             <Calendar className="w-3.5 h-3.5" /> Agenda ({activeAppointments.length})

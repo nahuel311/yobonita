@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import DayAgendaView from "@/components/admin/DayAgendaView";
+import MonthCalendarView from "@/components/admin/MonthCalendarView";
 import {
   Lock,
   Check,
@@ -9,6 +10,7 @@ import {
   MessageCircle,
   Save,
   Calendar,
+  CalendarDays,
   Sparkles,
   FileText,
   Clock,
@@ -25,7 +27,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const [tab, setTab] = useState<"agenda" | "horarios" | "servicios">("agenda");
+  const [tab, setTab] = useState<"agenda" | "calendario" | "horarios" | "servicios">("agenda");
   const [appointments, setAppointments] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [workingHours, setWorkingHours] = useState<any[]>([]);
@@ -345,6 +347,13 @@ export default function AdminPage() {
             <Calendar className="w-3.5 h-3.5" /> Agenda ({activeAppointments.length})
           </button>
           <button
+            onClick={() => setTab("calendario")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${tab === "calendario" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
+              }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" /> Calendario
+          </button>
+          <button
             onClick={() => setTab("horarios")}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
               tab === "horarios" ? "bg-white text-musgo shadow-sm" : "text-musgo/70"
@@ -367,6 +376,19 @@ export default function AdminPage() {
         <DayAgendaView
           appointments={appointments}
           blockedSlots={blockedSlots}
+          onUpdateAppointment={updateAppointment}
+          onSendReminder={async (id) => {
+            const res = await fetch(`/api/appointments/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "SEND_REMINDER" }),
+            });
+            if (res.ok) alert("Recordatorio enviado por WhatsApp ✨");
+          }}
+        />
+      ) : tab === "calendario" ? (
+        <MonthCalendarView
+          appointments={appointments}
           onUpdateAppointment={updateAppointment}
           onSendReminder={async (id) => {
             const res = await fetch(`/api/appointments/${id}`, {

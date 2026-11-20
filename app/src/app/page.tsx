@@ -400,9 +400,6 @@ export default function HomePage() {
                   <label className="block text-xs font-medium text-musgo/80">
                     Seleccioná una fecha
                   </label>
-                  <span className="text-[11px] text-musgo/60">
-                    Lun a Vie • 08:00 a 19:30 (Almuerzo 13:30 a 15:00)
-                  </span>
                 </div>
                 <div className="relative">
                     <div>
@@ -431,7 +428,7 @@ export default function HomePage() {
                     <>
                       <div className="flex justify-between items-baseline mb-2">
                         <label className="block text-xs font-medium text-musgo/80">
-                          Horarios disponibles (24 hs)
+                          Horarios disponibles
                         </label>
                         <span className="text-[11px] text-musgo/50">
                           {slots.length} turnos libres

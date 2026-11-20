@@ -39,11 +39,38 @@ export async function PATCH(
     return NextResponse.json({ ok: sent });
   }
 
+  const existingApp = await prisma.appointment.findUnique({
+    where: { id: params.id },
+  });
+
+  if (!existingApp) {
+    return NextResponse.json({ error: "Turno no encontrado" }, { status: 404 });
+  }
+
+  let linkedClientId = existingApp.clientId;
+
+  // Si se edita la ficha técnica, guardarla de forma persistente por teléfono
+  if (body.techNotes !== undefined) {
+    const upsertedClient = await prisma.client.upsert({
+      where: { phone: existingApp.clientPhone },
+      update: {
+        techNotes: body.techNotes,
+      },
+      create: {
+        phone: existingApp.clientPhone,
+        name: existingApp.clientName,
+        techNotes: body.techNotes,
+      },
+    });
+    linkedClientId = upsertedClient.id;
+  }
+
   const updated = await prisma.appointment.update({
     where: { id: params.id },
     data: {
       ...(body.status && { status: body.status }),
       ...(body.techNotes !== undefined && { techNotes: body.techNotes }),
+      ...(linkedClientId && { clientId: linkedClientId }),
       ...(body.name !== undefined && { name: String(body.name).trim() }),
       ...(body.category !== undefined && { category: String(body.category) }),
       ...(body.description !== undefined && {
@@ -67,7 +94,7 @@ export async function PATCH(
       }),
       ...(body.isActive !== undefined && { isActive: Boolean(body.isActive) }),
     },
-    include: { service: true },
+    include: { service: true, client: true },
   });
   
     // Si pasa a CONFIRMED, enviar confirmación + dirección exacta automáticamente

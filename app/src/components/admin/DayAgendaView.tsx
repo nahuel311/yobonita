@@ -30,6 +30,15 @@ export interface AppointmentItem {
     startTime: string;
     endTime: string;
     status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | string;
+    client?: {
+        id: string;
+        phone: string;
+        name: string;
+        techNotes?: string | null;
+        _count?: {
+            appointments: number;
+        };
+    } | null;
     service: {
         id: string;
         name: string;
@@ -167,9 +176,10 @@ export default function DayAgendaView({
 
     const handleSelectAppointment = (app: AppointmentItem) => {
         setSelectedAppId(app.id);
+        const persistentNotes = getPersistentTechNotes(app);
         setNotesDraft((prev) => ({
             ...prev,
-            [app.id]: prev[app.id] !== undefined ? prev[app.id] : app.techNotes || "",
+            [app.id]: prev[app.id] !== undefined ? prev[app.id] : persistentNotes,
         }));
     };
 
@@ -231,6 +241,27 @@ export default function DayAgendaView({
                     badgeStyle: "bg-musgo text-white",
                 };
         }
+    };
+
+    const getPersistentTechNotes = (app: AppointmentItem): string => {
+        if (app.client?.techNotes !== undefined && app.client?.techNotes !== null) {
+            return app.client.techNotes;
+        }
+        // Respaldo para turnos creados antes de activar el modelo Client
+        const matchWithNotes = appointments.find(
+            (other) => other.clientPhone === app.clientPhone && other.techNotes
+        );
+        return matchWithNotes?.techNotes || app.techNotes || "";
+    };
+
+    const getClientVisitCount = (app: AppointmentItem): number => {
+        if (app.client?._count?.appointments) {
+            return app.client._count.appointments;
+        }
+        return appointments.filter(
+            (other) =>
+                other.clientPhone === app.clientPhone && other.status !== "CANCELLED"
+        ).length;
     };
 
     return (
@@ -495,6 +526,11 @@ export default function DayAgendaView({
                                     <Phone className="w-3.5 h-3.5 text-oliva-dark" />+
                                     {selectedAppointment.clientPhone}
                                 </p>
+                                {getClientVisitCount(selectedAppointment) > 1 && (
+                                    <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold bg-oliva/25 text-oliva-dark px-2.5 py-0.5 rounded-full">
+                                        🌿 Clienta frecuente ({getClientVisitCount(selectedAppointment)} visitas)
+                                    </span>
+                                )}
                             </div>
                             <button
                                 type="button"
@@ -686,17 +722,21 @@ export default function DayAgendaView({
 
                         {/* Ficha Técnica Privada */}
                         <div className="space-y-2 pt-2 border-t border-lino">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-musgo/60 flex items-center gap-1.5">
-                                <FileText className="w-3.5 h-3.5 text-oliva-dark" />
-                                Ficha Técnica Privada
-                            </label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-[11px] font-semibold uppercase tracking-wider text-musgo/60 flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-oliva-dark" />
+                                    Ficha Técnica de Clienta
+                                </label>
+                                <span className="text-[10px] text-oliva-dark font-medium">
+                                    Persistente por teléfono
+                                </span>
+                            </div>
                             <textarea
-                                rows={3}
-                                placeholder="Ej: Bigudí M, tiempos 10'+8', tinte negro azulado, sensibilidad leve..."
+                                rows={4}
+                                placeholder="Ej: Bigudí M, tiempos 10'+8', tinte negro azulado, sensibilidad leve, prefiere té verde..."
                                 value={
                                     notesDraft[selectedAppointment.id] ??
-                                    selectedAppointment.techNotes ??
-                                    ""
+                                    getPersistentTechNotes(selectedAppointment)
                                 }
                                 onChange={(e) =>
                                     setNotesDraft({
@@ -704,7 +744,7 @@ export default function DayAgendaView({
                                         [selectedAppointment.id]: e.target.value,
                                     })
                                 }
-                                className="w-full bg-crema border border-oliva/40 rounded-xl p-2.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark"
+                                className="w-full bg-crema border border-oliva/40 rounded-xl p-2.5 text-xs text-musgo focus:outline-none focus:border-oliva-dark leading-relaxed"
                             />
                             <button
                                 type="button"
@@ -712,7 +752,7 @@ export default function DayAgendaView({
                                 onClick={() => handleSaveNotes(selectedAppointment.id)}
                                 className="w-full bg-lino hover:bg-oliva/40 text-musgo text-xs font-medium py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition"
                             >
-                                <Save className="w-3.5 h-3.5 text-oliva-dark" /> Guardar Ficha Técnica
+                                <Save className="w-3.5 h-3.5 text-oliva-dark" /> Guardar Ficha de Clienta
                             </button>
                         </div>
                     </aside>

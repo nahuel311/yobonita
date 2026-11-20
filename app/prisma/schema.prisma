@@ -21,6 +21,16 @@ model Service {
   appointments Appointment[]
 }
 
+model Client {
+  id           String        @id @default(cuid())
+  phone        String        @unique // Formato normalizado: 54911XXXXXXXX
+  name         String
+  techNotes    String?       // Ficha técnica persistente (bigudí, tiempos, pigmento, bebida favorita)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
 model Appointment {
   id          String   @id @default(cuid())
   manageToken String?  @unique
@@ -33,6 +43,8 @@ model Appointment {
   status      String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
   serviceId   String
   service     Service  @relation(fields: [serviceId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
   createdAt   DateTime @default(now())
 }
 

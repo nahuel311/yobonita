@@ -11,7 +11,20 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   const appointments = await prisma.appointment.findMany({
-    include: { service: true },
+    include: {
+      service: true,
+      client: {
+        include: {
+          _count: {
+            select: {
+              appointments: {
+                where: { status: { not: "CANCELLED" } },
+              },
+            },
+          },
+        },
+      },
+    },
     orderBy: { startTime: "asc" },
   });
   return NextResponse.json(appointments);
@@ -103,18 +116,39 @@ export async function POST(req: Request) {
     : `549${cleanPhone}`;
 
   const manageToken = crypto.randomUUID();
+
+  const cleanPhone = clientPhone.replace(/\D/g, "");
+  const normalizedPhone = cleanPhone.startsWith("54")
+    ? cleanPhone
+    : `549${cleanPhone}`;
+
+  // Buscar o crear ficha maestra de clienta por número de WhatsApp
+  const clientRecord = await prisma.client.upsert({
+    where: { phone: normalizedPhone },
+    update: {
+      name: clientName.trim(),
+    },
+    create: {
+      phone: normalizedPhone,
+      name: clientName.trim(),
+    },
+  });
+
+  const manageToken = crypto.randomUUID();
   const appointment = await prisma.appointment.create({
     data: {
+      manageToken,
       serviceId,
+      clientId: clientRecord.id,
       clientName: clientName.trim(),
       clientPhone: normalizedPhone,
       clientNotes: finalClientNotes,
+      techNotes: clientRecord.techNotes || null,
       startTime,
       endTime,
       status: "PENDING",
-      manageToken,
     },
-    include: { service: true },
+    include: { service: true, client: true },
   });
 
   // Envío automático de instrucciones de seña por WhatsApp

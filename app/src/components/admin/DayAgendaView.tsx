@@ -14,11 +14,14 @@ import {
     Phone,
     Sparkles,
     AlertCircle,
+    Link2,
+    ExternalLink,
     Coffee,
 } from "lucide-react";
 
 export interface AppointmentItem {
     id: string;
+    manageToken?: string | null;
     clientName: string;
     clientPhone: string;
     clientNotes?: string | null;
@@ -98,6 +101,22 @@ export default function DayAgendaView({
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
     const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
     const [busyAction, setBusyAction] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
+
+    const getManageUrl = (token: string) => {
+        const baseUrl =
+            typeof window !== "undefined"
+                ? window.location.origin
+                : process.env.NEXT_PUBLIC_SITE_URL || "https://yobonita.com.ar";
+        return `${baseUrl}/turno/${token}`;
+    };
+
+    const handleCopyManageLink = async (token: string) => {
+        const url = getManageUrl(token);
+        await navigator.clipboard.writeText(url);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+    };
 
     const selectedAppointment = useMemo(
         () => appointments.find((a) => a.id === selectedAppId) || null,
@@ -611,6 +630,58 @@ export default function DayAgendaView({
                                     )}
                             </div>
                         </div>
+
+                        {/* Enlace único de autogestión para la clienta */}
+                        {selectedAppointment.manageToken && (
+                            <div className="bg-crema/90 border border-oliva/35 rounded-2xl p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-musgo/70 flex items-center gap-1.5">
+                                        <Link2 className="w-3.5 h-3.5 text-oliva-dark" />
+                                        Link de autogestión
+                                    </span>
+                                    <a
+                                        href={getManageUrl(selectedAppointment.manageToken)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[11px] text-oliva-dark hover:underline flex items-center gap-1 font-medium"
+                                        title="Abrir vista de la clienta"
+                                    >
+                                        Abrir <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={getManageUrl(selectedAppointment.manageToken)}
+                                        onClick={(e) => e.currentTarget.select()}
+                                        className="flex-1 bg-white border border-lino rounded-xl px-2.5 py-1.5 text-[11px] text-musgo/85 font-mono truncate focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleCopyManageLink(selectedAppointment.manageToken!)
+                                        }
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1 shrink-0 transition ${copiedLink
+                                                ? "bg-emerald-700 text-white"
+                                                : "bg-oliva-dark hover:bg-musgo text-white"
+                                            }`}
+                                    >
+                                        {copiedLink ? (
+                                            <>
+                                                <Check className="w-3.5 h-3.5" /> Copiado
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-3.5 h-3.5" /> Copiar
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
 
                         {/* Ficha Técnica Privada */}
                         <div className="space-y-2 pt-2 border-t border-lino">

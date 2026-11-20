@@ -21,6 +21,8 @@ type Service = {
   description: string;
   durationMin: number;
   price: number;
+  discountPrice?: number | null;
+  depositPrice?: number | null;
 };
 
 export default function HomePage() {
@@ -211,9 +213,19 @@ export default function HomePage() {
       maximumFractionDigits: 0,
     }).format(val);
 
+  const getEffectivePrice = (srv: Service) =>
+    srv.discountPrice && srv.discountPrice > 0 && srv.discountPrice < srv.price
+      ? srv.discountPrice
+      : srv.price;
+
+  const getDepositAmount = (srv: Service) =>
+    srv.depositPrice && srv.depositPrice > 0
+      ? srv.depositPrice
+      : Math.round(getEffectivePrice(srv) * 0.3);
+
   const getWhatsAppReceiptUrl = () => {
     if (!bookedData || !selectedService) return "#";
-    const sena = Math.round(selectedService.price * 0.3);
+    const sena = getDepositAmount(selectedService);
     const text = `¡Hola Tami! Soy ${clientName}. Reservé turno para *${selectedService.name}* el día *${selectedDate}* a las *${selectedTime} hs*. Te adjunto el comprobante de la seña (${formatARS(sena)}) para confirmar ✨`;
     return `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;
   };
@@ -265,8 +277,8 @@ export default function HomePage() {
               Último paso para confirmar tu turno:
             </p>
             <p className="text-musgo/80 text-xs leading-relaxed">
-              Para proteger la agenda del estudio privado, pedimos una seña del{" "}
-              <strong>30% ({formatARS(Math.round(selectedService.price * 0.3))})</strong>{" "}
+              Para proteger la agenda del estudio privado, pedimos una seña de{" "}
+              <strong>{formatARS(getDepositAmount(selectedService))}</strong>{" "}
               dentro de las próximas 2 horas. Una vez acreditada, te enviamos la dirección exacta en Recoleta.
             </p>
             <div className="pt-1 text-xs font-mono bg-crema p-2.5 rounded-xl border border-oliva/20">
@@ -336,9 +348,22 @@ export default function HomePage() {
                           {srv.name}
                         </h3>
                       </div>
-                      <span className="font-semibold text-musgo whitespace-nowrap">
-                        {formatARS(srv.price)}
-                      </span>
+                      <div className="text-right whitespace-nowrap">
+                        {srv.discountPrice && srv.discountPrice > 0 && srv.discountPrice < srv.price ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-xs line-through text-musgo/45">
+                              {formatARS(srv.price)}
+                            </span>
+                            <span className="font-semibold text-oliva-dark">
+                              {formatARS(srv.discountPrice)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-musgo">
+                            {formatARS(srv.price)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-musgo/75 mt-1 leading-relaxed">
                       {srv.description}

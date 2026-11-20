@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DayAgendaView from "@/components/admin/DayAgendaView";
 import MonthCalendarView from "@/components/admin/MonthCalendarView";
+import ServicesManager from "@/components/admin/ServicesManager";
 import {
   Lock,
   Check,
@@ -36,7 +37,6 @@ export default function AdminPage() {
   const [hoursSuccess, setHoursSuccess] = useState("");
 
   const [techNotesMap, setTechNotesMap] = useState<Record<string, string>>({});
-  const [priceMap, setPriceMap] = useState<Record<string, string>>({});
 
   // Control de semana seleccionada
   const [currentWeekMonday, setCurrentWeekMonday] = useState<Date>(() => {
@@ -130,7 +130,6 @@ export default function AdminPage() {
       setServices(srvs);
       const prices: Record<string, string> = {};
       srvs.forEach((s: any) => (prices[s.id] = String(s.price)));
-      setPriceMap(prices);
     }
     if (whRes.ok) {
       const wh = await whRes.json();
@@ -164,15 +163,6 @@ export default function AdminPage() {
 
   const updateAppointment = async (id: string, payload: any) => {
     await fetch(`/api/appointments/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    loadData();
-  };
-
-  const updateService = async (id: string, payload: any) => {
-    await fetch(`/api/services/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -859,51 +849,7 @@ export default function AdminPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {services.map((srv) => (
-            <div
-              key={srv.id}
-              className="bg-white border border-lino rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3"
-            >
-              <div>
-                <h3 className="font-medium text-musgo text-sm">{srv.name}</h3>
-                <p className="text-xs text-musgo/65">
-                  {srv.category} • {srv.durationMin} min (+{srv.bufferMin} min limpieza)
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={priceMap[srv.id] ?? srv.price}
-                  onChange={(e) =>
-                    setPriceMap({ ...priceMap, [srv.id]: e.target.value })
-                  }
-                  className="w-28 bg-crema border border-oliva/40 rounded-lg px-2.5 py-1.5 text-sm"
-                />
-                <button
-                  onClick={() =>
-                    updateService(srv.id, { price: Number(priceMap[srv.id]) })
-                  }
-                  className="bg-oliva-dark text-white text-xs px-3 py-2 rounded-lg"
-                >
-                  Actualizar
-                </button>
-                <button
-                  onClick={() =>
-                    updateService(srv.id, { isActive: !srv.isActive })
-                  }
-                  className={`text-xs px-3 py-2 rounded-lg border ${
-                    srv.isActive
-                      ? "border-oliva text-oliva-dark"
-                      : "border-gray-300 text-gray-500"
-                  }`}
-                >
-                  {srv.isActive ? "Activo" : "Oculto"}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ServicesManager services={services} onRefresh={loadData} />
       )}
     </div>
   );

@@ -43,6 +43,28 @@ export async function PATCH(
     data: {
       ...(body.status && { status: body.status }),
       ...(body.techNotes !== undefined && { techNotes: body.techNotes }),
+      ...(body.name !== undefined && { name: String(body.name).trim() }),
+      ...(body.category !== undefined && { category: String(body.category) }),
+      ...(body.description !== undefined && {
+        description: String(body.description).trim(),
+      }),
+      ...(body.durationMin !== undefined && {
+        durationMin: Number(body.durationMin),
+      }),
+      ...(body.price !== undefined && { price: Number(body.price) }),
+      ...(body.discountPrice !== undefined && {
+        discountPrice:
+          body.discountPrice === null || body.discountPrice === ""
+            ? null
+            : Number(body.discountPrice),
+      }),
+      ...(body.depositPrice !== undefined && {
+        depositPrice:
+          body.depositPrice === null || body.depositPrice === ""
+            ? null
+            : Number(body.depositPrice),
+      }),
+      ...(body.isActive !== undefined && { isActive: Boolean(body.isActive) }),
     },
     include: { service: true },
   });

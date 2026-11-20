@@ -115,7 +115,11 @@ export async function POST(req: Request) {
   });
 
   // Envío automático de instrucciones de seña por WhatsApp
-  const sena = Math.round(service.price * 0.3);
+  const effectivePrice = service.discountPrice ?? service.price;
+  const sena =
+    service.depositPrice && service.depositPrice > 0
+      ? service.depositPrice
+      : Math.round(effectivePrice * 0.3);
   const senaFormatted = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",

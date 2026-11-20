@@ -28,6 +28,14 @@ export async function POST(req: Request) {
       durationMin: Number(body.durationMin),
       bufferMin: Number(body.bufferMin ?? 15),
       price: Number(body.price),
+      discountPrice:
+        body.discountPrice !== "" && body.discountPrice != null
+          ? Number(body.discountPrice)
+          : null,
+      depositPrice:
+        body.depositPrice !== "" && body.depositPrice != null
+          ? Number(body.depositPrice)
+          : null,
       isActive: true,
     },
   });

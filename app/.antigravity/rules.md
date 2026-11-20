@@ -3,10 +3,10 @@
 ## 1. Visión del Negocio y Reglas de Dominio
 - **Marca:** Yo Bonita (`@yobonitaa` en Instagram).
 - **Rubro:** Estética de la mirada — servicios profesionales de cejas y pestañas (Lifting & Botox, Brow Lamination, Perfilado y Diseño, Tinte/Henna y Combos Signature)[cite: 4, 5].
-- **Modalidad y Ubicación:** Home Studio privado ubicado en Recoleta, CABA, gestionado por su dueña, Tami[cite: 3, 4].
-- **Experiencia Sensorial:** Atención personalizada sin apuros con aromaterapia, música a elección de la clienta y café o té de cortesía[cite: 3, 5].
+- **Modalidad y Ubicación:** Home Studio ubicado en Recoleta, CABA, gestionado por su dueña, Tami[cite: 3, 4].
+- **Experiencia Sensorial:** Atención personalizada sin apuros con aromaterapia, música a elección de la clienta e infusión o bebida fresca cortesía[cite: 3, 5].
 - **Reglas Críticas de Operación (Lógica de Negocio):**
-  1. **Privacidad de dirección:** La web pública solo muestra *"Home Studio Privado • Recoleta, CABA"*. La dirección exacta y timbre se envían únicamente por WhatsApp desde `/admin` una vez que Tami confirma el pago de la seña.
+  1. **Privacidad de dirección:** La web pública solo muestra *"Home Studio • Recoleta, CABA"*. La dirección exacta y timbre se envían únicamente por WhatsApp desde `/admin` una vez que Tami confirma el pago de la seña.
   2. **Buffer Time (Tiempo de preparación):** Cada servicio tiene un `durationMin` (atención) + `bufferMin` (15 a 20 min de limpieza, esterilización y ventilación). El motor de disponibilidad bloquea `durationMin + bufferMin` para evitar superposiciones.
   3. **Flujo de Seña y WhatsApp sin API paga:** La reserva web crea un turno en estado `PENDING` y redirige a WhatsApp (`https://wa.me/...`) con un mensaje prearmado para enviar el comprobante de la seña (30%). Todas las notificaciones operativas usan deep links de WhatsApp.
   4. **Zona Horaria:** Toda la lógica de fechas y disponibilidad opera estrictamente en hora de Argentina (`America/Argentina/Buenos_Aires` / `-03:00`) con un mínimo de 2 horas de anticipación para turnos en el mismo día[cite: 3].

@@ -254,7 +254,7 @@ export default function HomePage() {
             <Music className="w-3.5 h-3.5 text-oliva-dark" /> Tu música
           </span>
           <span className="flex items-center gap-1">
-            <Coffee className="w-3.5 h-3.5 text-oliva-dark" /> Café / Té
+            <Coffee className="w-3.5 h-3.5 text-oliva-dark" /> Infusión o bebida fresca
           </span>
         </div>
       </header>
@@ -277,7 +277,7 @@ export default function HomePage() {
               Último paso para confirmar tu turno:
             </p>
             <p className="text-musgo/80 text-xs leading-relaxed">
-              Para proteger la agenda del estudio privado, pedimos una seña de{" "}
+              Para proteger la agenda del estudio, pedimos una seña de{" "}
               <strong>{formatARS(getDepositAmount(selectedService))}</strong>{" "}
               dentro de las próximas 2 horas. Una vez acreditada, te enviamos la dirección exacta en Recoleta.
             </p>

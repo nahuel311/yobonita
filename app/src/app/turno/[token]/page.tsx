@@ -13,6 +13,7 @@ import {
     Info,
     MessageCircle,
     ArrowLeft,
+    Wallet,
 } from "lucide-react";
 
 interface PublicAppointment {
@@ -24,6 +25,11 @@ interface PublicAppointment {
     status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | string;
     isRefundEligible: boolean;
     address: string | null;
+    payment: {
+        totalPrice: number;
+        depositAmount: number;
+        remainingBalance: number;
+    };
     service: {
         id: string;
         name: string;
@@ -154,7 +160,7 @@ export default function ManageAppointmentPage() {
         setFeedbackMsg({
             type: "success",
             text: data.isRefundEligible
-                ? "Tu turno fue cancelado con más de 12 hs de anticipación. Escribinos por WhatsApp con tu alias para reintegrarte la seña 🌿"
+                ? "Tu turno fue cancelado con más de 12 hs de anticipación. Escribinos por WhatsApp para gestionar el reintegro de la seña 🌿"
                 : "Tu turno fue cancelado. Como faltaban menos de 12 hs, la seña no tiene devolución.",
         });
         await loadAppointment();
@@ -175,6 +181,13 @@ export default function ManageAppointmentPage() {
             minute: "2-digit",
             hour12: false,
         });
+
+    const formatARS = (val: number) =>
+        new Intl.NumberFormat("es-AR", {
+            style: "currency",
+            currency: "ARS",
+            maximumFractionDigits: 0,
+        }).format(val);
 
     const todayISO = new Date().toLocaleDateString("en-CA", {
         timeZone: "America/Argentina/Buenos_Aires",
@@ -219,7 +232,7 @@ export default function ManageAppointmentPage() {
             <header className="text-center space-y-1">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-lino text-musgo text-xs">
                     <MapPin className="w-3.5 h-3.5 text-oliva-dark" />
-                    Home Studio Privado • Recoleta
+                    Home Studio • Recoleta
                 </span>
                 <h1 className="font-serif text-4xl font-semibold text-musgo pt-1">
                     Yo Bonita
@@ -307,6 +320,41 @@ export default function ManageAppointmentPage() {
                             </span>
                         </div>
                     </div>
+
+                    {appointment.payment && appointment.status !== "CANCELLED" && (
+                        <div className="flex items-start gap-2.5 pt-2 border-t border-lino">
+                            <Wallet className="w-4 h-4 text-oliva-dark shrink-0 mt-0.5" />
+                            <div className="w-full space-y-1">
+                                <span className="text-[11px] uppercase tracking-wider text-musgo/60 block">
+                                    Detalle de pago
+                                </span>
+                                <div className="flex justify-between text-xs text-musgo/80">
+                                    <span>Valor del tratamiento:</span>
+                                    <span>{formatARS(appointment.payment.totalPrice)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs text-musgo/80">
+                                    <span>
+                                        {appointment.status === "PENDING"
+                                            ? "Seña requerida para reservar:"
+                                            : "Seña abonada:"}
+                                    </span>
+                                    <span>
+                                        {appointment.status === "PENDING"
+                                            ? formatARS(appointment.payment.depositAmount)
+                                            : `-${formatARS(appointment.payment.depositAmount)}`}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-baseline pt-1.5 mt-1 border-t border-lino/80">
+                                    <span className="text-xs font-semibold text-musgo">
+                                        Saldo a abonar al finalizar:
+                                    </span>
+                                    <span className="text-base font-bold text-oliva-dark">
+                                        {formatARS(appointment.payment.remainingBalance)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {appointment.address && (
                         <div className="flex items-start gap-2.5 pt-2 border-t border-lino">

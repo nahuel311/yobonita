@@ -30,6 +30,21 @@ export async function GET(
     const isRefundEligible = startMs - now >= TWELVE_HOURS_MS;
 
     // Nunca exponemos techNotes en la vista pública y solo mostramos dirección si está CONFIRMED
+    const effectivePrice =
+        appointment.service.discountPrice &&
+            appointment.service.discountPrice > 0 &&
+            appointment.service.discountPrice < appointment.service.price
+            ? appointment.service.discountPrice
+            : appointment.service.price;
+
+    const depositAmount =
+        appointment.service.depositPrice && appointment.service.depositPrice > 0
+            ? appointment.service.depositPrice
+            : Math.round(effectivePrice * 0.3);
+
+    const remainingBalance = Math.max(0, effectivePrice - depositAmount);
+
+    // Nunca exponemos techNotes en la vista pública y solo mostramos dirección si está CONFIRMED
     return NextResponse.json({
         id: appointment.id,
         manageToken: appointment.manageToken,
@@ -39,12 +54,17 @@ export async function GET(
         status: appointment.status,
         isRefundEligible,
         address: appointment.status === "CONFIRMED" ? EXACT_ADDRESS : null,
+        payment: {
+            totalPrice: effectivePrice,
+            depositAmount,
+            remainingBalance,
+        },
         service: {
             id: appointment.service.id,
             name: appointment.service.name,
             category: appointment.service.category,
             durationMin: appointment.service.durationMin,
-            price: appointment.service.discountPrice ?? appointment.service.price,
+            price: effectivePrice,
         },
     });
 }

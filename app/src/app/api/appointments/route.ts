@@ -117,11 +117,6 @@ export async function POST(req: Request) {
 
   const manageToken = crypto.randomUUID();
 
-  const cleanPhone = clientPhone.replace(/\D/g, "");
-  const normalizedPhone = cleanPhone.startsWith("54")
-    ? cleanPhone
-    : `549${cleanPhone}`;
-
   // Buscar o crear ficha maestra de clienta por número de WhatsApp
   const clientRecord = await prisma.client.upsert({
     where: { phone: normalizedPhone },
@@ -134,7 +129,6 @@ export async function POST(req: Request) {
     },
   });
 
-  const manageToken = crypto.randomUUID();
   const appointment = await prisma.appointment.create({
     data: {
       manageToken,

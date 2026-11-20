@@ -4,91 +4,51 @@ import { ensureSeeded } from "@/lib/seed";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request) {
-  await ensureSeeded();
-  const { searchParams } = new URL(req.url);
-  const dateStr = searchParams.get("date"); // YYYY-MM-DD
-  const serviceId = searchParams.get("serviceId");
-
-  if (!dateStr || !serviceId) {
-    return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
-  }
-
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
-  if (!service) {
-    return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
-  }
-
-  // Interpretar fecha en zona horaria Argentina (-03:00)
+function computeSlotsForDate(
+  dateStr: string,
+  service: { durationMin: number; bufferMin: number },
+  workingHoursMap: Map<number, { startTime: string; endTime: string; isOpen: boolean }>,
+  appointments: Array<{ startTime: Date; endTime: Date }>,
+  blockedSlots: Array<{ startTime: Date; endTime: Date }>,
+  minBookingTime: Date
+): string[] {
   const dayStart = new Date(`${dateStr}T00:00:00-03:00`);
-  const dayEnd = new Date(`${dateStr}T23:59:59-03:00`);
   const dayOfWeek = dayStart.getUTCDay();
+  const workingHours = workingHoursMap.get(dayOfWeek);
 
-  const workingHours = await prisma.workingHours.findUnique({
-    where: { dayOfWeek },
-  });
-
-  if (!workingHours || !workingHours.isOpen) {
-    return NextResponse.json({ slots: [], isClosed: true });
-  }
+  if (!workingHours || !workingHours.isOpen) return [];
 
   const [openH, openM] = workingHours.startTime.split(":").map(Number);
   const [closeH, closeM] = workingHours.endTime.split(":").map(Number);
 
   const openMinutes = openH * 60 + openM;
   const closeMinutes = closeH * 60 + closeM;
-  const bufferMin = service.bufferMin ?? 15;
-  const totalBlockMin = service.durationMin + bufferMin;
+  const totalBlockMin = service.durationMin + service.bufferMin;
 
-  // Buscar turnos activos y bloqueos de ese día
-  const [appointments, blockedSlots] = await Promise.all([
-    prisma.appointment.findMany({
-      where: {
-        status: { in: ["PENDING", "CONFIRMED"] },
-        startTime: { gte: dayStart, lte: dayEnd },
-      },
-      include: { service: true },
-    }),
-    prisma.blockedSlot.findMany({
-      where: {
-        startTime: { lte: dayEnd },
-        endTime: { gte: dayStart },
-      },
-    }),
-  ]);
+  // Franja habitual de almuerzo Lun-Vie (13:30 a 15:00)
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+  const lunchStart = new Date(`${dateStr}T13:30:00-03:00`);
+  const lunchEnd = new Date(`${dateStr}T15:00:00-03:00`);
 
-  const now = new Date();
-  const minBookingTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // Mínimo 2hs de anticipación
   const slots: string[] = [];
-
-  // Franja fija de almuerzo configurada por default para días hábiles (13:30 a 15:00)
-  const isBusinessDay = dayOfWeek >= 1 && dayOfWeek <= 5;
-  const LUNCH_START_MIN = 13 * 60 + 30; // 13:30
-  const LUNCH_END_MIN = 15 * 60;        // 15:00
 
   for (let m = openMinutes; m + service.durationMin <= closeMinutes; m += 30) {
     const hh = String(Math.floor(m / 60)).padStart(2, "0");
     const mm = String(m % 60).padStart(2, "0");
     const timeLabel = `${hh}:${mm}`;
 
-    // Bloqueo si el tratamiento o su buffer se superponen con la franja de almuerzo
-    if (isBusinessDay && m < LUNCH_END_MIN && (m + totalBlockMin) > LUNCH_START_MIN) {
-      continue;
-    }
-
     const candidateStart = new Date(`${dateStr}T${timeLabel}:00-03:00`);
     const candidateEnd = new Date(candidateStart.getTime() + totalBlockMin * 60000);
 
     if (candidateStart < minBookingTime) continue;
 
-    const overlapsApp = appointments.some((app) => {
-      // Bloque ocupado: duración del tratamiento + 15 min de margen para acondicionar el lugar
-      const appBuffer = app.service?.bufferMin ?? 15;
-      const effectiveAppEnd = app.service
-        ? new Date(app.startTime.getTime() + (app.service.durationMin + appBuffer) * 60000)
-        : app.endTime;
-      return candidateStart < effectiveAppEnd && candidateEnd > app.startTime;
-    });
+    if (isWeekday && candidateStart < lunchEnd && candidateEnd > lunchStart) {
+      continue;
+    }
+
+    const overlapsApp = appointments.some(
+      (app) => candidateStart < app.endTime && candidateEnd > app.startTime
+    );
     const overlapsBlock = blockedSlots.some(
       (blk) => candidateStart < blk.endTime && candidateEnd > blk.startTime
     );
@@ -97,6 +57,112 @@ export async function GET(req: Request) {
       slots.push(timeLabel);
     }
   }
+
+  return slots;
+}
+
+export async function GET(req: Request) {
+  await ensureSeeded();
+  const { searchParams } = new URL(req.url);
+  const dateStr = searchParams.get("date"); // YYYY-MM-DD
+  const monthStr = searchParams.get("month"); // YYYY-MM
+  const serviceId = searchParams.get("serviceId");
+
+  if (!serviceId || (!dateStr && !monthStr)) {
+    return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
+  }
+
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) {
+    return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
+  }
+
+  const allWorkingHours = await prisma.workingHours.findMany();
+  const workingHoursMap = new Map(
+    allWorkingHours.map((wh) => [wh.dayOfWeek, wh])
+  );
+  const minBookingTime = new Date(Date.now() + 2 * 60 * 60 * 1000);
+
+  // MODO 1: Consulta mensual para marcar días disponibles con punto verde
+  if (monthStr) {
+    const [yearStr, monStr] = monthStr.split("-");
+    const year = Number(yearStr);
+    const month = Number(monStr); // 1..12
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const rangeStart = new Date(`${monthStr}-01T00:00:00-03:00`);
+    const rangeEnd = new Date(
+      `${monthStr}-${String(daysInMonth).padStart(2, "0")}T23:59:59-03:00`
+    );
+
+    const [appointments, blockedSlots] = await Promise.all([
+      prisma.appointment.findMany({
+        where: {
+          status: { in: ["PENDING", "CONFIRMED"] },
+          startTime: { lte: rangeEnd },
+          endTime: { gte: rangeStart },
+        },
+        select: { startTime: true, endTime: true },
+      }),
+      prisma.blockedSlot.findMany({
+        where: {
+          startTime: { lte: rangeEnd },
+          endTime: { gte: rangeStart },
+        },
+        select: { startTime: true, endTime: true },
+      }),
+    ]);
+
+    const availableDates: string[] = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDateStr = `${monthStr}-${String(day).padStart(2, "0")}`;
+      const daySlots = computeSlotsForDate(
+        currentDateStr,
+        service,
+        workingHoursMap,
+        appointments,
+        blockedSlots,
+        minBookingTime
+      );
+      if (daySlots.length > 0) {
+        availableDates.push(currentDateStr);
+      }
+    }
+
+    return NextResponse.json({ availableDates });
+  }
+
+  // MODO 2: Consulta puntual de horarios de un día (dateStr)
+  const dayStart = new Date(`${dateStr}T00:00:00-03:00`);
+  const dayEnd = new Date(`${dateStr}T23:59:59-03:00`);
+
+  const [appointments, blockedSlots] = await Promise.all([
+    prisma.appointment.findMany({
+      where: {
+        status: { in: ["PENDING", "CONFIRMED"] },
+        startTime: { lte: dayEnd },
+        endTime: { gte: dayStart },
+      },
+      select: { startTime: true, endTime: true },
+    }),
+    prisma.blockedSlot.findMany({
+      where: {
+        startTime: { lte: dayEnd },
+        endTime: { gte: dayStart },
+      },
+      select: { startTime: true, endTime: true },
+    }),
+  ]);
+
+  const slots = computeSlotsForDate(
+    dateStr!,
+    service,
+    workingHoursMap,
+    appointments,
+    blockedSlots,
+    minBookingTime
+  );
 
   return NextResponse.json({ slots });
 }

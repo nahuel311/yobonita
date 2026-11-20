@@ -59,7 +59,7 @@ export default function AdminPage() {
 
   // Personalizá acá la dirección exacta que se envía solo cuando confirmás la seña
   const EXACT_ADDRESS_MSG =
-    "📍 Dirección exacta: Av. Santa Fe XXXX, Piso X, Depto X (Recoleta). Recordá venir sin maquillaje en los ojos. ¡Te espero!";
+    "📍 Dirección exacta: Rodriguez Peña 1334, Piso 8, Depto A (Recoleta). Recordá venir sin maquillaje en los ojos. ¡Te espero!";
 
   const DAY_NAMES = [
     "Domingo",

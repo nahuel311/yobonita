@@ -5,7 +5,7 @@ import { sendWhatsAppText, formatArgDateTime } from "@/lib/whatsapp";
 export const dynamic = "force-dynamic";
 
 const EXACT_ADDRESS =
-    "Av. Santa Fe XXXX, Piso X, Depto X (Recoleta, CABA)";
+    "Rodriguez Peña 1334, Piso 8, Depto A (Recoleta, CABA)";
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 

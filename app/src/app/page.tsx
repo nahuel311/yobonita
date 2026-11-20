@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import BookingCalendar from "@/components/BookingCalendar";
 import {
   Sparkles,
   MapPin,
@@ -404,13 +405,16 @@ export default function HomePage() {
                   </span>
                 </div>
                 <div className="relative">
-                  <input
-                    type="date"
-                    min={todayISO}
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full bg-crema border border-oliva/40 rounded-xl px-3.5 py-2.5 text-sm text-musgo focus:outline-none focus:border-oliva-dark"
-                  />
+                    <div>
+                      <label className="block text-xs font-medium text-musgo/80 mb-1.5">
+                        Seleccioná una fecha
+                      </label>
+                      <BookingCalendar
+                        serviceId={selectedService.id}
+                        selectedDate={selectedDate}
+                        onSelectDate={(dateStr) => setSelectedDate(dateStr)}
+                      />
+                    </div>
                 </div>
               </div>
 

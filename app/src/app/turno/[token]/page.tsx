@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import BookingCalendar from "@/components/BookingCalendar";
 import {
     Calendar,
     Clock,
@@ -376,7 +377,7 @@ export default function ManageAppointmentPage() {
                     <div className="bg-lino/70 border border-oliva/30 rounded-2xl p-3.5 flex items-start gap-2.5 text-xs text-musgo/90 leading-relaxed">
                         <Info className="w-4 h-4 text-oliva-dark shrink-0 mt-0.5" />
                         <p>
-                            <strong>Política de reserva:</strong> Tu seña se devuelve al 100%
+                            <strong>Política de reserva:</strong> No perdes tu seña 
                             si cancelás con al menos <strong>12 horas de anticipación</strong>.
                             También podés reprogramar tu turno sin perder la seña.
                         </p>
@@ -433,14 +434,16 @@ export default function ManageAppointmentPage() {
                             <label className="block text-xs font-medium text-musgo/80 mb-1">
                                 Nueva fecha
                             </label>
-                            <input
-                                type="date"
-                                min={todayISO}
-                                required
-                                value={newDate}
-                                onChange={(e) => setNewDate(e.target.value)}
-                                className="w-full bg-white border border-oliva/40 rounded-xl px-3.5 py-2.5 text-sm text-musgo focus:outline-none focus:border-oliva-dark"
-                            />
+                            <div>
+                                <label className="block text-xs font-medium text-musgo/80 mb-1.5">
+                                    Seleccioná una fecha
+                                </label>
+                                <BookingCalendar
+                                    serviceId={selectedService.id}
+                                    selectedDate={selectedDate}
+                                    onSelectDate={(dateStr) => setSelectedDate(dateStr)}
+                                />
+                            </div>
                         </div>
 
                         {newDate && (

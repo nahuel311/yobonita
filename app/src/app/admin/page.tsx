@@ -170,6 +170,13 @@ export default function AdminPage() {
     loadData();
   };
 
+  const deleteAppointment = async (id: string) => {
+    await fetch(`/api/appointments/${id}`, {
+      method: "DELETE",
+    });
+    loadData();
+  };
+
   const handleSaveWorkingHours = async () => {
     setSavingHours(true);
     setHoursSuccess("");
@@ -367,6 +374,7 @@ export default function AdminPage() {
           appointments={appointments}
           blockedSlots={blockedSlots}
           onUpdateAppointment={updateAppointment}
+          onDeleteAppointment={deleteAppointment}
           onSendReminder={async (id) => {
             const res = await fetch(`/api/appointments/${id}`, {
               method: "PATCH",

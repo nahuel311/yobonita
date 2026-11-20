@@ -84,3 +84,25 @@ export async function PATCH(
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  try {
+    await prisma.appointment.delete({
+      where: { id: params.id },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Error al eliminar turno:", error);
+    return NextResponse.json(
+      { error: "No se pudo eliminar el turno" },
+      { status: 500 }
+    );
+  }
+}

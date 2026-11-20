@@ -47,6 +47,7 @@ interface DayAgendaViewProps {
     appointments: AppointmentItem[];
     blockedSlots?: BlockedSlotItem[];
     onUpdateAppointment: (id: string, payload: Record<string, unknown>) => Promise<void>;
+    onDeleteAppointment: (id: string) => Promise<void>;
     onSendReminder: (id: string) => Promise<void>;
 }
 
@@ -89,6 +90,7 @@ export default function DayAgendaView({
     appointments,
     blockedSlots = [],
     onUpdateAppointment,
+    onDeleteAppointment,
     onSendReminder,
 }: DayAgendaViewProps) {
     const todayStr = useMemo(() => getArgDateStr(new Date()), []);
@@ -130,7 +132,6 @@ export default function DayAgendaView({
     // Filtrar turnos activos del día seleccionado (excluye cancelados de la grilla)
     const dayAppointments = useMemo(() => {
         return appointments.filter((app) => {
-            if (app.status === "CANCELLED") return false;
             return getArgDateStr(new Date(app.startTime)) === selectedDate;
         });
     }, [appointments, selectedDate]);
@@ -196,6 +197,12 @@ export default function DayAgendaView({
                     label: "Realizado",
                     cardStyle: "bg-musgo/10 border-musgo/50 text-musgo",
                     badgeStyle: "bg-musgo text-white",
+                };
+            case "CANCELLED":
+                return {
+                    label: "Cancelado",
+                    cardStyle: "bg-red-50/85 border-red-300 text-musgo/70",
+                    badgeStyle: "bg-red-600 text-white",
                 };
             default:
                 return {
@@ -359,31 +366,63 @@ export default function DayAgendaView({
                                 ).toISOString();
 
                                 return (
-                                    <button
+                                    <div
                                         key={app.id}
-                                        type="button"
+                                        role="button"
+                                        tabIndex={0}
                                         onClick={() => handleSelectAppointment(app)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") handleSelectAppointment(app);
+                                        }}
                                         style={{
                                             top: `${topPx + 1}px`,
                                             height: `${totalHeightPx}px`,
                                         }}
-                                        className={`absolute left-2 right-2 rounded-2xl border-l-4 border text-left transition-all overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md ${styleInfo.cardStyle
+                                        className={`group absolute left-2 right-2 rounded-2xl border-l-4 border text-left transition-all overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md cursor-pointer ${styleInfo.cardStyle
                                             } ${isSelected
                                                 ? "ring-2 ring-musgo z-20 scale-[1.005]"
                                                 : "z-10 opacity-95 hover:opacity-100"
                                             }`}
                                     >
+                                        {/* Botón X en la esquina superior derecha para eliminar turnos cancelados */}
+                                        {app.status === "CANCELLED" && (
+                                            <button
+                                                type="button"
+                                                title="Eliminar turno cancelado de la agenda"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (
+                                                        window.confirm(
+                                                            `¿Eliminar definitivamente el turno cancelado de ${app.clientName}?`
+                                                        )
+                                                    ) {
+                                                        if (selectedAppId === app.id) setSelectedAppId(null);
+                                                        await onDeleteAppointment(app.id);
+                                                    }
+                                                }}
+                                                className="absolute top-1.5 right-1.5 z-30 w-5 h-5 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-sm transition"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        )}
+
                                         {/* Bloque principal de atención */}
                                         <div
                                             style={{ height: `${serviceRatioPct}%` }}
-                                            className="px-3 py-1.5 flex flex-col justify-between min-h-0"
+                                            className={`px-3 py-1.5 flex flex-col justify-between min-h-0 ${app.status === "CANCELLED" ? "pr-8" : ""
+                                                }`}
                                         >
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2 truncate">
                                                     <span className="text-xs font-bold text-musgo whitespace-nowrap">
                                                         {formatArgTime(app.startTime)} - {formatArgTime(serviceEndIso)}
                                                     </span>
-                                                    <span className="font-semibold text-sm text-musgo truncate">
+                                                    <span
+                                                        className={`font-semibold text-sm truncate ${app.status === "CANCELLED"
+                                                                ? "line-through text-musgo/60"
+                                                                : "text-musgo"
+                                                            }`}
+                                                    >
                                                         {app.clientName}
                                                     </span>
                                                 </div>
@@ -410,7 +449,7 @@ export default function DayAgendaView({
                                                 ✨ +{bufferDuration} min preparación estudio
                                             </div>
                                         )}
-                                    </button>
+                                    </div>
                                 );
                             })}
                         </div>

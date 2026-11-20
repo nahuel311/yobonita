@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { sendWhatsAppText, formatArgDateTime } from "@/lib/whatsapp";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,7 @@ export async function POST(req: Request) {
     ? cleanPhone
     : `549${cleanPhone}`;
 
+  const manageToken = crypto.randomUUID();
   const appointment = await prisma.appointment.create({
     data: {
       serviceId,
@@ -110,6 +112,7 @@ export async function POST(req: Request) {
       startTime,
       endTime,
       status: "PENDING",
+      manageToken,
     },
     include: { service: true },
   });

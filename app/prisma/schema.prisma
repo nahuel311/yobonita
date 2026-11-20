@@ -23,6 +23,7 @@ model Service {
 
 model Appointment {
   id          String   @id @default(cuid())
+  manageToken String?  @unique
   clientName  String
   clientPhone String
   clientNotes String?

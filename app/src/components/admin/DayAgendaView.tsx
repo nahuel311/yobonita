@@ -16,6 +16,7 @@ import {
     AlertCircle,
     Link2,
     ExternalLink,
+    Copy,
     Coffee,
 } from "lucide-react";
 

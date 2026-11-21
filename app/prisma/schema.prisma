@@ -41,6 +41,7 @@ model Appointment {
   startTime   DateTime
   endTime     DateTime
   status      String   @default("PENDING") // PENDING | CONFIRMED | COMPLETED | CANCELLED
+  reminderSentAt DateTime?
   serviceId   String
   service     Service  @relation(fields: [serviceId], references: [id])
   clientId    String?

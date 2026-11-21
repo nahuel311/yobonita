@@ -727,9 +727,6 @@ export default function DayAgendaView({
                                     <FileText className="w-3.5 h-3.5 text-oliva-dark" />
                                     Ficha Técnica de Clienta
                                 </label>
-                                <span className="text-[10px] text-oliva-dark font-medium">
-                                    Persistente por teléfono
-                                </span>
                             </div>
                             <textarea
                                 rows={4}

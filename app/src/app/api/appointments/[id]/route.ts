@@ -29,11 +29,11 @@ export async function PATCH(
     }
   
     const reminderMsg =
-      `¡Hola ${app.clientName}! 🌿 Te recuerdo tu turno en *Yo Bonita*:\n\n` +
+      `¡Hola ${app.clientName}! 🌿\n Te recuerdo tu turno en *Yo Bonita*:\n\n` +
       `• *Servicio:* ${app.service.name}\n` +
-      `• *Cuándo:* ${formatArgDateTime(app.startTime)} hs\n` +
+      `• *Cuándo:* ${formatArgDateTime(app.startTime)} \n` +
       `• *Dirección:* ${EXACT_ADDRESS}\n\n` +
-      `Recordá asistir sin maquillaje ni cremas oleosas en la zona de los ojos. ¡Te espero! ✨`;
+      `Recordá asistir sin maquillaje ni cremas en la zona.\n ¡Te espero! ✨`;
   
     const sent = await sendWhatsAppText(app.clientPhone, reminderMsg);
     return NextResponse.json({ ok: sent });
@@ -116,10 +116,10 @@ export async function PATCH(
         `¡Hola ${updated.clientName}! Recibí tu seña ✨\n\n` +
         `Tu turno para *${updated.service.name}* el *${formatArgDateTime(
           updated.startTime
-        )} hs* está *CONFIRMADO*.\n\n` +
+        )} * está *CONFIRMADO*.\n\n` +
         `📍 *Dirección:* ${EXACT_ADDRESS}\n` +
-        `Recordá asistir sin maquillaje en los ojos.\n\n` +
-        `🔗 *Gestioná tu turno (reprogramar o cancelar):*\n${manageUrl}\n` +
+        `Recordá asistir sin maquillaje.\n\n` +
+        `🔗 *Gestioná tu turno (reprogramar o cancelar):*\n${manageUrl}\n\n` +
         `_(La seña se reintegra cancelando con al menos 12 hs de anticipación)_ 🌿`;
       
       await sendWhatsAppText(updated.clientPhone, confirmMsg);

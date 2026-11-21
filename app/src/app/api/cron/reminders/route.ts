@@ -40,11 +40,11 @@ export async function GET(req: Request) {
             : "";
 
         const reminderMsg =
-            `¡Hola ${app.clientName}! 🌿 Te recuerdo tu turno de mañana en *Yo Bonita*:\n\n` +
+            `¡Hola ${app.clientName}! 🌿 \nTe recuerdo tu turno de mañana en *Yo Bonita*:\n\n` +
             `• *Servicio:* ${app.service.name}\n` +
-            `• *Cuándo:* ${formatArgDateTime(app.startTime)} hs\n` +
+            `• *Cuándo:* ${formatArgDateTime(app.startTime)}\n` +
             `• *Dirección:* ${EXACT_ADDRESS}\n\n` +
-            `Recordá asistir sin maquillaje ni cremas oleosas en la zona de los ojos. ¡Te espero! ✨` +
+            `Recordá asistir sin maquillaje ni cremas en la zona. \n¡Te espero! ✨` +
             manageLine;
 
         const ok = await sendWhatsAppText(app.clientPhone, reminderMsg);

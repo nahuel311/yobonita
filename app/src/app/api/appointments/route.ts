@@ -158,12 +158,12 @@ export async function POST(req: Request) {
   }).format(sena);
 
   const welcomeMsg =
-    `¡Hola ${appointment.clientName}! ✨ Soy Tami de *Yo Bonita*.\n\n` +
-    `Recibimos tu solicitud de turno:\n` +
+    `¡Hola ${appointment.clientName}! ✨ \nSoy Tami de *Yo Bonita*.\n\n` +
+    `Recibi tu solicitud de turno:\n` +
     `• *Servicio:* ${service.name}\n` +
-    `• *Fecha y hora:* ${formatArgDateTime(startTime)} hs\n\n` +
+    `• *Fecha y hora:* ${formatArgDateTime(startTime)}\n\n` +
     `Para confirmar tu lugar en nuestro Home Studio de Recoleta, aboná la seña del 30% (*${senaFormatted}*) dentro de las próximas 2 horas al alias:\n` +
-    `👉 *yobonita.studio*\n\n` +
+    `👉 *yobonita.st*\n\n` +
     `Respondeme este mensaje con el comprobante y te envío la dirección exacta 🌿`;
 
   // Disparo en segundo plano para no demorar la respuesta web

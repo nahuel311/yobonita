@@ -4,7 +4,7 @@ import { sendWhatsAppText, formatArgDateTime } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
-const EXACT_ADDRESS = "Av. Santa Fe XXXX, Piso X, Depto X (Recoleta, CABA)";
+const EXACT_ADDRESS = "Rodriguez Peña 1334, Piso 8, Depto A (Recoleta, CABA)";
 
 export async function GET(req: Request) {
     const authHeader = req.headers.get("authorization");
@@ -35,17 +35,12 @@ export async function GET(req: Request) {
     let sentCount = 0;
 
     for (const app of upcomingAppointments) {
-        const manageLine = app.manageToken
-            ? `\n\nSi necesitás reprogramar o cancelar, podés gestionarlo desde acá:\n${siteUrl}/turno/${app.manageToken}`
-            : "";
-
         const reminderMsg =
             `¡Hola ${app.clientName}! 🌿 \nTe recuerdo tu turno de mañana en *Yo Bonita*:\n\n` +
             `• *Servicio:* ${app.service.name}\n` +
             `• *Cuándo:* ${formatArgDateTime(app.startTime)}\n` +
             `• *Dirección:* ${EXACT_ADDRESS}\n\n` +
-            `Recordá asistir sin maquillaje ni cremas en la zona. \n¡Te espero! ✨` +
-            manageLine;
+            `Recordá asistir sin maquillaje ni cremas en la zona. \n¡Te espero! ✨`;
 
         const ok = await sendWhatsAppText(app.clientPhone, reminderMsg);
 

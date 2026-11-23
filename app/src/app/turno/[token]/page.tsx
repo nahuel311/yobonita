@@ -439,7 +439,7 @@ export default function ManageAppointmentPage() {
                                     Seleccioná una fecha
                                 </label>
                                 <BookingCalendar
-                                    serviceId={selectedService.id}
+                                    serviceId={appointment.service.id}
                                     selectedDate={selectedDate}
                                     onSelectDate={(dateStr) => setSelectedDate(dateStr)}
                                 />

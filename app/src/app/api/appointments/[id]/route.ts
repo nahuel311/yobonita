@@ -110,16 +110,19 @@ export async function PATCH(
 
       const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL || "https://yobonita.com.ar";
-      const manageUrl = `${siteUrl}/turno/${token}`;
+
+      const manageUrl = updated.manageToken
+        ? `${siteUrl}/t/${updated.manageToken}\n_`
+        : "";
 
       const confirmMsg =
         `¡Hola ${updated.clientName}! Recibí tu seña ✨\n\n` +
         `Tu turno para *${updated.service.name}* el *${formatArgDateTime(
           updated.startTime
-        )} * está *CONFIRMADO*.\n\n` +
+        )}* está *CONFIRMADO*.\n\n` +
         `📍 *Dirección:* ${EXACT_ADDRESS}\n` +
         `Recordá asistir sin maquillaje.\n\n` +
-        `🔗 *Gestioná tu turno (reprogramar o cancelar):*\n${manageUrl}\n\n` +
+        `🔗 *Gestioná tu turno (reprogramar o cancelar):*\n${manageUrl}\n` +
         `_(La seña se reintegra cancelando con al menos 12 hs de anticipación)_ 🌿`;
       
       await sendWhatsAppText(updated.clientPhone, confirmMsg);

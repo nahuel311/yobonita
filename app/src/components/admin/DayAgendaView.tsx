@@ -118,7 +118,7 @@ export default function DayAgendaView({
             typeof window !== "undefined"
                 ? window.location.origin
                 : process.env.NEXT_PUBLIC_SITE_URL || "https://yobonita.com.ar";
-        return `${baseUrl}/turno/${token}`;
+        return `${baseUrl}/t/${token}`;
     };
 
     const handleCopyManageLink = async (token: string) => {

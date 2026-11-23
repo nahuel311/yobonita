@@ -286,7 +286,7 @@ export default function AdminPage() {
   const getWhatsAppConfirmLink = (app: any) => {
     const msg = `¡Hola ${app.clientName}! Recibí tu seña, tu turno para *${app.service.name}* (${formatDateTime(
       app.startTime
-    )} hs) está *CONFIRMADO* ✨\n\n${EXACT_ADDRESS_MSG}`;
+    )}) está *CONFIRMADO* ✨\n\n${EXACT_ADDRESS_MSG}`;
     return `https://wa.me/${app.clientPhone}?text=${encodeURIComponent(msg)}`;
   };
 

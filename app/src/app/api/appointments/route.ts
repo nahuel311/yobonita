@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { sendWhatsAppText, formatArgDateTime } from "@/lib/whatsapp";
 import crypto from "crypto";
+import { generateShortCode } from "@/lib/shortCode";
 
 export const dynamic = "force-dynamic";
 
@@ -115,7 +116,15 @@ export async function POST(req: Request) {
     ? cleanPhone
     : `549${cleanPhone}`;
 
-  const manageToken = crypto.randomUUID();
+  let manageToken = generateShortCode(6);
+  // Verificación preventiva de colisión
+  const existingToken = await prisma.appointment.findUnique({
+    where: { manageToken },
+    select: { id: true },
+  });
+  if (existingToken) {
+    manageToken = generateShortCode(7);
+  }
 
   // Buscar o crear ficha maestra de clienta por número de WhatsApp
   const clientRecord = await prisma.client.upsert({

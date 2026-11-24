@@ -20,13 +20,8 @@ export async function sendWhatsAppText(phone: string, text: string) {
             },
             body: JSON.stringify({
                 number: cleanNumber,
-                options: {
-                    delay: 1200, // Simula escritura humana natural
-                    presence: "composing",
-                },
-                textMessage: {
-                    text,
-                },
+                delay: 1200, // Simula escritura humana natural
+                text,
             }),
         });
 

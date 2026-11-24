@@ -440,8 +440,8 @@ export default function ManageAppointmentPage() {
                                 </label>
                                 <BookingCalendar
                                     serviceId={appointment.service.id}
-                                    selectedDate={selectedDate}
-                                    onSelectDate={(dateStr) => setSelectedDate(dateStr)}
+                                    selectedDate={newDate}
+                                    onSelectDate={(dateStr) => setNewDate(dateStr)}
                                 />
                             </div>
                         </div>

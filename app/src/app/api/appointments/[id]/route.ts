@@ -29,7 +29,7 @@ export async function PATCH(
     }
   
     const reminderMsg =
-      `¡Hola ${app.clientName}! 🌿\n Te recuerdo tu turno en *Yo Bonita*:\n\n` +
+      `¡Hola ${app.clientName}! 🌿\nTe recuerdo tu turno en *Yo Bonita*:\n\n` +
       `• *Servicio:* ${app.service.name}\n` +
       `• *Cuándo:* ${formatArgDateTime(app.startTime)} \n` +
       `• *Dirección:* ${EXACT_ADDRESS}\n\n` +

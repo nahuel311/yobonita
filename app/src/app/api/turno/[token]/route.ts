@@ -187,7 +187,7 @@ export async function PATCH(
 
         // Confirmar por WhatsApp a la clienta y avisar a Tami
         const clientMsg =
-            `¡Hola ${updated.clientName}! ✨ Tu turno en *Yo Bonita* fue *REPROGRAMADO* con éxito:\n\n` +
+            `¡Hola ${updated.clientName}! ✨ \nTu turno en *Yo Bonita* fue *REPROGRAMADO* con éxito:\n\n` +
             `• *Servicio:* ${updated.service.name}\n` +
             `• *Nueva fecha y hora:* ${formatArgDateTime(newStartTime)} hs\n` +
             (updated.status === "CONFIRMED"

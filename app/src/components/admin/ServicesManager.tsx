@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Save,
     Plus,
@@ -11,6 +11,7 @@ import {
     CheckCircle2,
     Eye,
     EyeOff,
+    Trash2,
 } from "lucide-react";
 
 export interface ServiceItem {
@@ -63,6 +64,26 @@ export default function ServicesManager({
 
     const [savingId, setSavingId] = useState<string | null>(null);
     const [savedId, setSavedId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    // Sincronizar borradores cuando se actualizan los servicios
+    useEffect(() => {
+        setDrafts((prev) => {
+            const next = { ...prev };
+            services.forEach((s) => {
+                next[s.id] = {
+                    name: s.name,
+                    category: s.category,
+                    description: s.description || "",
+                    durationMin: String(s.durationMin),
+                    price: String(s.price),
+                    discountPrice: s.discountPrice != null ? String(s.discountPrice) : "",
+                    depositPrice: s.depositPrice != null ? String(s.depositPrice) : "",
+                };
+            });
+            return next;
+        });
+    }, [services]);
 
     // Estado para crear un nuevo servicio
     const [showNewForm, setShowNewForm] = useState(false);
@@ -130,6 +151,37 @@ export default function ServicesManager({
             setSavedId(srv.id);
             setTimeout(() => setSavedId(null), 2500);
             await onRefresh();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || "No se pudieron guardar las modificaciones.");
+        }
+    };
+
+    const handleDeleteService = async (srv: ServiceItem) => {
+        if (!window.confirm(`¿Estás segura de eliminar "${srv.name}"? Se borrará definitivamente del catálogo.`)) {
+            return;
+        }
+
+        setDeletingId(srv.id);
+        try {
+            const res = await fetch(`/api/services/${srv.id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                setDrafts((prev) => {
+                    const next = { ...prev };
+                    delete next[srv.id];
+                    return next;
+                });
+                await onRefresh();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || "No se pudo eliminar el tratamiento.");
+            }
+        } catch {
+            alert("Error de conexión al eliminar el tratamiento.");
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -543,25 +595,38 @@ export default function ServicesManager({
 
                             {/* Fila 4: Acciones */}
                             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-lino/70">
-                                <button
-                                    type="button"
-                                    disabled={savingId === srv.id}
-                                    onClick={() => handleToggleActive(srv)}
-                                    className={`text-xs px-3 py-2 rounded-xl border flex items-center gap-1.5 font-medium transition ${srv.isActive
-                                            ? "border-oliva text-oliva-dark bg-oliva/10 hover:bg-oliva/20"
-                                            : "border-gray-300 text-gray-500 bg-white hover:bg-gray-100"
-                                        }`}
-                                >
-                                    {srv.isActive ? (
-                                        <>
-                                            <Eye className="w-3.5 h-3.5" /> Visible en la web
-                                        </>
-                                    ) : (
-                                        <>
-                                            <EyeOff className="w-3.5 h-3.5" /> Oculto en la web
-                                        </>
-                                    )}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={savingId === srv.id || deletingId === srv.id}
+                                        onClick={() => handleToggleActive(srv)}
+                                        className={`text-xs px-3 py-2 rounded-xl border flex items-center gap-1.5 font-medium transition ${srv.isActive
+                                                ? "border-oliva text-oliva-dark bg-oliva/10 hover:bg-oliva/20"
+                                                : "border-gray-300 text-gray-500 bg-white hover:bg-gray-100"
+                                            }`}
+                                    >
+                                        {srv.isActive ? (
+                                            <>
+                                                <Eye className="w-3.5 h-3.5" /> Visible en la web
+                                            </>
+                                        ) : (
+                                            <>
+                                                <EyeOff className="w-3.5 h-3.5" /> Oculto en la web
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        disabled={savingId === srv.id || deletingId === srv.id}
+                                        onClick={() => handleDeleteService(srv)}
+                                        className="text-xs px-3 py-2 rounded-xl border border-red-200 text-red-600 bg-red-50/80 hover:bg-red-100 flex items-center gap-1.5 font-medium transition disabled:opacity-50"
+                                        title="Eliminar tratamiento definitivamente"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        {deletingId === srv.id ? "Borrando..." : "Borrar"}
+                                    </button>
+                                </div>
 
                                 <div className="flex items-center gap-2">
                                     {savedId === srv.id && (
@@ -571,7 +636,7 @@ export default function ServicesManager({
                                     )}
                                     <button
                                         type="button"
-                                        disabled={savingId === srv.id}
+                                        disabled={savingId === srv.id || deletingId === srv.id}
                                         onClick={() => handleSaveService(srv)}
                                         className="bg-oliva-dark hover:bg-musgo text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition shadow-sm disabled:opacity-50"
                                     >

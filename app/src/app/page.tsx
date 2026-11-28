@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import BookingCalendar from "@/components/BookingCalendar";
 import {
   Sparkles,
@@ -54,7 +54,7 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    fetch("/api/services")
+    fetch("/api/services", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => setServices(data));
 
@@ -219,6 +219,43 @@ export default function HomePage() {
       ? srv.discountPrice
       : srv.price;
 
+  // Prioridad de agrupación: 1. Pestañas, 2. Cejas, 3. Combos, 4. Otros
+  const getCategoryPriority = (category: string) => {
+    const norm = (category || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+    if (norm.includes("pestan")) return 1;
+    if (norm.includes("ceja")) return 2;
+    if (norm.includes("combo")) return 3;
+    return 4;
+  };
+
+  // Ordenar tratamientos: Pestañas -> Cejas -> Combos, y dentro de cada grupo por precio ascendente
+  const sortedServices = useMemo(() => {
+    return [...services].sort((a, b) => {
+      const pA = getCategoryPriority(a.category);
+      const pB = getCategoryPriority(b.category);
+      if (pA !== pB) {
+        return pA - pB;
+      }
+
+      const priceA = getEffectivePrice(a);
+      const priceB = getEffectivePrice(b);
+      if (priceA !== priceB) {
+        return priceA - priceB;
+      }
+
+      if (a.price !== b.price) {
+        return a.price - b.price;
+      }
+
+      return a.name.localeCompare(b.name, "es");
+    });
+  }, [services]);
+
   const getDepositAmount = (srv: Service) =>
     srv.depositPrice && srv.depositPrice > 0
       ? srv.depositPrice
@@ -327,7 +364,7 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-2.5">
-              {services.map((srv) => {
+              {sortedServices.map((srv) => {
                 const isSelected = selectedService?.id === srv.id;
                 return (
                   <button
